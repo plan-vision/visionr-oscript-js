@@ -1,0 +1,24 @@
+{
+  "name": "visionr-oscript-js",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build" : "node src/js/build && browserify ./index.js | uglifyjs --compress > ../visionr-core/visionr-local-vsc.min.js",
+    "deploy" : "node src/js/build && browserify -d ./index.js > ../visionr-core/visionr-local-vsc.min.js",
+    
+    "test" : "node src/js/build && browserify -d ./index.js > ../FM/target/client/script/visionr-local-vsc.min.js",
+    "proj" : "node src/js/build && browserify -d ./index.js > site/dist.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plan-vision/visionr-oscript-js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "browserify": "^16.2.3",
+    "uglify-js": "^3.6.0"
+  }
+}
