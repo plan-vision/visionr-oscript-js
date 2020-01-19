@@ -87,7 +87,12 @@ var JAVA2JS = cnv.JAVA2JS;
 	var _pdefproscache={};
 	Clazz.newMeth(C$, 'getObjectDefProperties$S', function(key) {
 		var t = _pdefproscache[key];if (t) return t; 
-		var res=[];for (var e of db.find(key).properties) res.push(e.code);		
+		var res=[];
+		var pros = db.find(key).properties;
+		for (var i=0;i<pros.length;i++) {
+			var e = pros[i];
+			res.push(e.code);
+		}
 		return _pdefproscache[key]=t;
 	}, 1);
 	var _topodcache={};
@@ -149,11 +154,11 @@ var JAVA2JS = cnv.JAVA2JS;
 		if (!obj) return null;
 		var val = obj[pro];
 		if (obj instanceof Array) {
-			var pos=0;for (var e of obj) {
+			for (var pos=0;pos<obj.lengt;pos++) {
+				var e = obj[pos];
 				if (e instanceof Date) e=e.getTime();
 				if (e == val)
 					return pos;
-				pos++;
 			}
 		}
 		return -1;
@@ -163,9 +168,9 @@ var JAVA2JS = cnv.JAVA2JS;
 		if (!obj) return null;
 		var val = obj[pro];
 		if (obj instanceof Array) {
-			var pos=0;for (var e of obj) {
+			for (var pos=0;pos<obj.lengt;pos++) {
+				var e = obj[pos];
 				if (e.id == valid) return pos;
-				pos++;
 			}
 		}
 		return -1;
