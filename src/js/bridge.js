@@ -6,6 +6,38 @@ var cnv = require("../../../../src/js/cnv");
 var strstream = require("../../../../src/js/strstream");
 var JS2JAVA = cnv.JS2JAVA; 
 var JAVA2JS = cnv.JAVA2JS;
+
+function fnd(odkey,pro) {
+	var od = db.find(odkey);
+	if (od) {
+		var p = od.getProperty(pro);
+		if (!p) throw "bridge.fnd : missing property "+pro+" of "+odkey;				
+		return p.meta;
+	}
+	switch (odkey) 
+	{
+		case "core.objectdef" :
+		case "core.property" :
+			switch (pro) {
+				case "code" : return {
+					varchar: true,
+					string: true
+				};
+				case "id" : return {
+					integer: true,
+					number: true
+				};
+				case "name" : return {
+					varchar: true,
+					string: true,
+					i18n : true
+				};
+			}
+			break;
+	}
+	throw "bridge.fnd : missing schema "+odkey;
+}
+//------------------------------------------------------------------------------------------------
 (function() {
 	var P$ = Clazz.newPackage("bridge"), I$ = [ [ 0, 'java.util.HashMap',
 			'oscript.OscriptInterpreter', 'oscript.data.Value',
@@ -39,14 +71,50 @@ var JAVA2JS = cnv.JAVA2JS;
 
 	//-----------------------------------------------------------------------------------
 	Clazz.newMeth(C$, 'objectDefHasPropery$S$S', function(odkey, code) {
-		return !!db.find(odkey).getProperty(code);
+		var od = db.find(odkey);
+		if (!od)  
+		{
+			switch (odkey) 
+			{
+				case "core.objectdef" :
+				case "core.property" :
+					switch (code) {
+						case "code" :
+						case "id" :
+						case "name" :
+							return true;
+					}
+					break;
+			}
+			throw "bridge.objectDefHasPropery$S$S : can not find schema "+odkey;
+		}
+		return !!od.getProperty(code);
 	}, 1);
 	Clazz.newMeth(C$, 'isMultiple$S$S', function(odkey, pro) {
-		var p = db.find(odkey).getProperty(pro);
+		var od = db.find(odkey);
+		if (!od) return false;
+		var p = od.getProperty(pro);
 		if (!p) return false;return !!p.meta.multiple;
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectValue$S$J$S', function(odkey, id, pro) {
-		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		var od = storage.ocache.ensureObjectsReady(odkey);
+		if (!od)  {
+			switch (odkey) {
+				case "core.property" :
+					var p = storage.defs.proById[id];
+					if (p) {
+						switch (pro) {
+							case "code" :
+								return p.code;
+							case "id" :
+								return p.id;
+						}
+					}
+					break;
+			}
+			throw "bridge.getObjectValue$S$J$S : can not find schema "+odkey;
+		}
+		var obj = od.get(id);
 		var val = JS2JAVA(obj[pro]);return val;
 	}, 1);
 	
@@ -55,26 +123,53 @@ var JAVA2JS = cnv.JAVA2JS;
 		var val = obj[pro];if (val == undefined) return 0;
 		if (val instanceof Array) return val.length;return 1;
 	}, 1);
-	Clazz.newMeth(C$, 'require$S$S$OA', function (require, api, args) {
-		debugger;
-		return null;
+	Clazz.newMeth(C$, 'require$S$S$OA', function (req, api, args) {
+		var r=require(req);
+		if (!r) throw "can not find require : "+req;
+		r=r[api];
+		if (!r) throw "can not find require member : "+req+"."+api;
+		//---------------------------------------
+		var a = JAVA2JS(args);
+		var b = r.apply(null,a);
+		//---------------------------------------
+		return JS2JAVA(b);
 	}, 1);
 	//-----------------------------------------------------------------------------------
+	Clazz.newMeth(C$, 'getSchemaName$S', function (odkey) {
+		var n = storage.defs.schemas[odkey];
+		if (!n || !n.name) return odkey;
+		 return n.name[storage.defs.lang] || n.name[storage.defs.defaultLang] || odkey; 
+	}, 1);
 	Clazz.newMeth(C$, 'getObjectDefId$S', function(odkey) { return db.find(odkey).id; }, 1);
-	Clazz.newMeth(C$, 'getObjectDefById$J', function(id) { var odef = storage.defs.odById[id]; if (!odef) throw new "bridge.js Can not find schema by id "+id; return odef.KEY; }, 1);
+	Clazz.newMeth(C$, 'getObjectDefById$J', function(id) { var odef = storage.defs.odById[id]; if (!odef) throw "bridge.js Can not find schema by id "+id; return odef.KEY; }, 1);
 	Clazz.newMeth(C$, 'getModuleId$S', function(module) { return storage.defs.modules[module].id; }, 1);
 	Clazz.newMeth(C$, 'hasModule$S', function(module) { return !!storage.defs.modules[module]; }, 1);
 	Clazz.newMeth(C$, 'moduleHasChild$S$S', function(module, odef) { return !!db.find(module+"."+odef); }, 1);
 	Clazz.newMeth(C$, 'getModules$', function() { return Object.keys(storage.defs.modules); }, 1);
 	Clazz.newMeth(C$, 'getModuleChildren$S', function(module) { var res = Object.keys(db[module]); return res; }, 1);
-	Clazz.newMeth(C$, 'isRelationNotOption$S$S', function(odkey, pro) {var m = db.find(odkey).getProprty(pro).meta;return m.relation && !m.option;}, 1);
-	Clazz.newMeth(C$, 'isDataTypeDouble$S$S', function(odkey, pro) {var m = db.find(odkey).getProprty(pro).meta;return !!m.double;}, 1);
-	Clazz.newMeth(C$, 'isRelation$S$S', function(odkey, pro) {var m = db.find(odkey).getProprty(pro).meta;return !!m.relation;}, 1);
-	Clazz.newMeth(C$, 'isI18n$S$S', function(odkey, pro) {var m = db.find(odkey).getProprty(pro).meta; return !!m.i18n;}, 1);
-	Clazz.newMeth(C$, 'getPropertyOptionSet$S$S', function(odkey, pro) {var m = db.find(odkey).getProprty(pro).meta;return m.optionSet;}, 1);
-	Clazz.newMeth(C$, 'currentLang$', function() { return storage.defs.currentLang; }, 1);
+	Clazz.newMeth(C$, 'isRelationNotOption$S$S', function(odkey, pro) {var m = fnd(odkey,pro);return m.relation && !m.option;}, 1);
+	Clazz.newMeth(C$, 'isDataTypeDouble$S$S', function(odkey, pro) {var m = fnd(odkey,pro);return !!m.double;}, 1);
+	Clazz.newMeth(C$, 'isRelation$S$S', function(odkey, pro) {var m = fnd(odkey,pro);return !!m.relation;}, 1);
+	Clazz.newMeth(C$, 'isI18n$S$S', function(odkey, pro) {var m = fnd(odkey,pro); return !!m.i18n;}, 1);
+	Clazz.newMeth(C$, 'getPropertyOptionSet$S$S', function(odkey, pro) {var m = fnd(odkey,pro);return m.optionSet;}, 1);
+	Clazz.newMeth(C$, 'currentLang$', function() { return storage.defs.lang; }, 1);
 	Clazz.newMeth(C$, 'defaultLang$', function() { return storage.defs.defaultLang; }, 1);
-	Clazz.newMeth(C$, 'getObjectByCode$S$S', function (odkey, code) { var o = db.find(odkey).byCode(code);if (!o) return;return JS2JAVA(o); }, 1);
+	Clazz.newMeth(C$, 'getObjectByCode$S$S', function (odkey, code) {
+		var od = db.find(odkey);
+		if (!od) {
+			switch (odkey) {
+				case "core.script" :
+				case "core.vscript" :
+				case "core.jscript" :
+					return server.ObjectWrapper.makeObject$S$J$S(odkey,-1,code); // force code 
+				default : 
+					throw "bridge.js : getObjectByCode$S$S : missing schema "+odkey;
+			}
+		}
+		var o = od.byCode(code);
+		if (!o) return;
+		return JS2JAVA(o); 
+	}, 1);
 	//-----------------------------------------------------------------------------------
 	Clazz.newMeth(C$, 'getModuleById$J', function(id) {
 		var mods = storage.defs.modules;
@@ -93,7 +188,7 @@ var JAVA2JS = cnv.JAVA2JS;
 			var e = pros[i];
 			res.push(e.code);
 		}
-		return _pdefproscache[key]=t;
+		return _pdefproscache[key]=res;
 	}, 1);
 	var _topodcache={};
 	Clazz.newMeth(C$, 'getTopObjectDef$S', function(odkey) {
@@ -136,10 +231,24 @@ var JAVA2JS = cnv.JAVA2JS;
 		return JS2JAVA(val[pos]);
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectI18nValue$S$J$S$S', function(odkey, id, pro, lang) {
-		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		var cache = storage.ocache.ensureObjectsReady(odkey);
+		if (!cache) {
+			switch (odkey) {
+				case "core.property" : {
+					switch (pro) {
+						case "name" : 
+							var n = storage.defs.proById[id].name || {};
+							return n[lang];
+					}
+				}
+				break
+			}
+			throw "bridge.getObjectI18nValue$S$J$S$S : can not find schema "+odkey;
+		} 
+		var obj = cache.get(id);
 		if (!obj) return null;
-		var val = obj[pro];if (!val) return null;
-		return JS2JAVA(val[lang]);
+		var val = obj[pro];if (!val) return null;		
+		return JS2JAVA((obj._vals[pro]||{})[lang]);
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectI18nValueLanguages$S$J$S', function(odkey, id, pro) {
 		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
@@ -250,8 +359,17 @@ var JAVA2JS = cnv.JAVA2JS;
 		return false;
 	}, 1);
 	Clazz.newMeth(C$, 'callScript$S$OA', function(code, args) {
-		debugger;
-		return null;
+		var scr = storage.defs.scripts[code];
+		if (scr.lang == "vsc") {
+			// VSC
+			if (!scr.body)
+				scr.body='function ('+scr.params.concat(["in..."]).join(",")+"){ \n"+scr.script+"\n}";
+			return C$.callVScriptFunction$S$S$OA(code,scr.body,args||[]);
+		}
+		// JavaScript
+		if (!scr.fnc)
+			scr.fnc = applyToConstructor(Function,scr.params.concat([scr.script]));
+		return JS2JAVA(src.fnc.apply(null,args));
 	}, 1);
 	Clazz.newMeth(C$, 'callScriptProperty$S$J$S$OA', function(odkey, id, pro, args) {
 		debugger;
@@ -322,6 +440,7 @@ var JAVA2JS = cnv.JAVA2JS;
 		window.VSCRIPT={			
 				call : function(key,body,args) {
 					try {
+						if (typeof body == "function") body=body();
 						return JAVA2JS(C$.callVScriptFunction$S$S$OA(key,body,JS2JAVA(args)));
 					} catch(e) {
 						if (typeof e.getMessage == "function")

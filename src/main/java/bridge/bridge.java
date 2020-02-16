@@ -25,6 +25,10 @@ public class bridge
 		return ValueConvertor.convertToJavaObject(t.callAsFunction(a));
 	}
 	//---------------------------------------------------------------------
+	public static String getSchemaName(String odefkeey) {
+		return null; 
+	} 
+	
 	public static String getVScriptPropertyDefaultValue(String odefkeey,long id,String pro) {
 		return null; 
 	}

@@ -388,6 +388,7 @@ case '/oscript/data/ValueWrapperTempReference.js' : require('./site/swingjs/j2s/
 case '/oscript/data/WeakReference.js' : require('./site/swingjs/j2s/oscript/data/WeakReference.js');
 case '/bridge/base.js' : require('./site/swingjs/j2s/bridge/base.js');
 case '/bridge/bridge.js' : require('./site/swingjs/j2s/bridge/bridge.js');
+case '/bridge/common.js' : require('./site/swingjs/j2s/bridge/common.js');
 case '/server/BasicValueLocator.js' : require('./site/swingjs/j2s/server/BasicValueLocator.js');
 case '/server/DBObjReaderContextWrapper.js' : require('./site/swingjs/j2s/server/DBObjReaderContextWrapper.js');
 case '/server/DBWrapper.js' : require('./site/swingjs/j2s/server/DBWrapper.js');

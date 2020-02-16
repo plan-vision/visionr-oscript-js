@@ -23,6 +23,8 @@ package oscript.data;
 
 
 import oscript.exceptions.*;
+import oscript.util.MemberTable;
+import oscript.util.StackFrame;
 
 import java.util.Hashtable;
 
@@ -82,7 +84,98 @@ public class OString extends OObject implements java.io.Externalizable
                                                       "split"
                                                     };
   
-  
+  public Value getMember(int id, boolean exception) throws PackagedScriptObjectException 
+  {
+	  switch(Symbol.getSymbol(id).toString()) 
+	  {
+		case "trim" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return new OString(trim());
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+		case "toUpperCase" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return new OString(toUpperCase());
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+		case "toLowerCase" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return new OString(toLowerCase());
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+  		case "split" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return split(args.referenceAt(0).toString());
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+  		case "indexOf" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return new OExactNumber(indexOf(args.referenceAt(0).toString()));
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+  		case "lastIndexOf" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return new OExactNumber(lastIndexOf(args.referenceAt(0).toString()));
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+  		case "startsWith" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return new OBoolean(startsWith(args.referenceAt(0).toString()));
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+  		case "endsWith" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					return new OBoolean(endsWith(args.referenceAt(0).toString()));
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+  		case "substring" :
+			return new Value() 
+			{
+				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+				{
+					if (args.length() > 1) {
+						return new OString(substring((int)args.referenceAt(0).castToExactNumber(),(int)args.referenceAt(1).castToExactNumber()));
+					} else {
+						return new OString(substring((int)args.referenceAt(0).castToExactNumber()));
+					}					
+				};
+				protected Value getTypeImpl() {return this;};
+			};
+	  }
+	  return super.getMember(id,exception);
+  }
   /*=======================================================================*/
   /**
    */

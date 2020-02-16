@@ -1,4 +1,5 @@
 package test; 
+
 import bridge.base;
 import bridge.bridge; 
 import oscript.OscriptInterpreter;
@@ -16,11 +17,20 @@ public class EntryPoint {
 			new FunctionScope();  // force load
 			new ParseException(); // force load
 			new oscript.exceptions.PackagedScriptObjectException(null);	// force load
-			/*if (System.currentTimeMillis() == 0) */OscriptInterpreter.eval(" \"\" + function(a){ return a + 2+a*3 - 6; };");	// force load, do not execute	
+			OscriptInterpreter.eval(" \"\" + function(a){ return a + 6+a*3 - 6; };");	// force load, do not execute
+			OscriptInterpreter.eval("var a=[];a.push(2);");
+			//------------------------------------------
+			//GLOB("reports.misc.test",...)
+			// TEST 
+			//OscriptInterpreter.eval("GLOB(\"a.b\",\"public function b() {}\");");
+			//OscriptInterpreter.eval("GLOB(\"a.c\",\"public function b() {}\");");
+			//OscriptInterpreter.eval("t.b();");
+			//OscriptInterpreter.eval("GLOB(\"aa\",\"\");");			
+			//------------------------------------------
 			bridge.boostrap();
 			base.init();
 		} catch (ParseException e) { 
 			System.err.println("ERROR : "+e);
 		}
-	}
+	}	
 }

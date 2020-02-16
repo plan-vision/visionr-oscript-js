@@ -51,7 +51,7 @@ public final class ValueWrapper extends ValueWrapperTempReference implements OIn
 	public boolean proIsI18n() 
 	{
 		if (isi != null) return isi;
-		return isi=bridge.isMultiple(obj.odefkey(), locator.pro);
+		return isi=bridge.isI18n(obj.odefkey(), locator.pro);
 	}
 	
 	private Boolean ism=null;
@@ -862,12 +862,12 @@ public final class ValueWrapper extends ValueWrapperTempReference implements OIn
 		} else {
 			if (!locator.oldMode) 
 			{
-				if (bridge.getObjectI18nValue(obj.odefkey(), obj.id(), locator.pro,locator.lang) != null)
+				if (bridge.getObjectI18nValue(obj.odefkey(), obj.id(), locator.pro,bridge.currentLang()) != null)
 					o=getValue(2,bridge.currentLang(),0,false);
 				else
 					o=getValue(2,bridge.defaultLang(),0,false);
 			} else {
-				if (bridge.getObjectOldI18nValue(obj.odefkey(), obj.id(), locator.pro,locator.lang) != null)
+				if (bridge.getObjectOldI18nValue(obj.odefkey(), obj.id(), locator.pro,bridge.currentLang()) != null)
 					o=getValue(2,bridge.currentLang(),0,true);
 				else
 					o=getValue(2,bridge.defaultLang(),0,true);

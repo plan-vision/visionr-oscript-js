@@ -18,7 +18,7 @@ import oscript.varray.Map;
 public final class ObjectWrapper extends Value implements Comparable
 {
 	public static final int TYPE_OBJECT=0;
-	public static final int TYPE_PROPERTY=1;
+	public static final int TYPE_PROPERTY=1; 
 	public static final int TYPE_MODULE=2;
 	public static final int TYPE_OBJECTDEF=3;
 	public int _getType()  {return type;}
@@ -61,7 +61,17 @@ public final class ObjectWrapper extends Value implements Comparable
 		that._objSchema=that.odkey=odefkey;
 		return that;
 	}
+	public static ObjectWrapper makeObject(String odefkey,long id,String forceCode) {
+		ObjectWrapper that = new ObjectWrapper();
+		that.type=TYPE_OBJECT;
+		that.resolveChildren=false;
+		that._objId=id;
+		that._objSchema=that.odkey=odefkey;
+		that.forceCode=forceCode;  
+		return that;
+	}
 	//-----------------------------------------------------------------------------------------------------------------
+	private String forceCode;
 	public String getOD() {
 		return odkey;
 	}
@@ -86,6 +96,8 @@ public final class ObjectWrapper extends Value implements Comparable
 	}
 
 	public String code() {
+		if (forceCode != null)
+			return forceCode;
 		String code = (String)bridge.getObjectValue(_objSchema, _objId, "code");
 		if (code == null) return "";
 		return code;
@@ -203,8 +215,28 @@ public final class ObjectWrapper extends Value implements Comparable
 		} else if (type == TYPE_OBJECTDEF) {
 			// NOT IMPL
 		} else {
-			if (bridge.objectDefHasPropery(odkey, code))
+			if (bridge.objectDefHasPropery(odkey, code)) {
+				if (code.equals("objectdef")) {
+					return new Value() {
+						@Override
+						protected Value getTypeImpl() {
+							return null;
+						}				
+						@Override
+						public Value getMember( int id, boolean exception ) {	
+							String code = Symbol.getSymbol(id).castToString();
+							if (code.equals("name")) {
+								return new OString(bridge.getSchemaName(odkey));
+							}							
+							return super.getMember(id,exception);
+						}
+						public String castToString() {
+							return bridge.getSchemaName(odkey);
+						}
+					};
+				}
 				p=code;
+			}
 		}
 		if (p == null)
 			return null;
@@ -318,6 +350,7 @@ public final class ObjectWrapper extends Value implements Comparable
 		if (type == TYPE_OBJECT) 
 		{
 			switch (_objSchema) {
+				case "core.script":
 				case "core.vscript":
 				case "core.jscript":
 					Object a[] = new Object[args.length()];
@@ -510,7 +543,7 @@ public final class ObjectWrapper extends Value implements Comparable
 			case Symbols.HAS_NAME2:
 				return new OBoolean(bridge.objectDefHasPropery(odkey, "name"));
 			case Symbols.MODULE_TYPE:
-				return DBWrapper.that.getMember(odkey.split(".")[0]);	
+				return DBWrapper.that.getMember(odkey.split("\\.")[0]);	
 			/*case Symbols.TOP_OBJECTDEF:
 				return od.getTopObjectDef().getObjectWrapper();
 			case Symbols.PARENT_OBJECTDEF: {
@@ -556,7 +589,7 @@ public final class ObjectWrapper extends Value implements Comparable
 			case Symbols.FROM_CACHE_TYPE : 
 				return this;
 			case Symbols.OBJECTDEF_TYPE : 
-				String aa[]=odkey.split(".");
+				String aa[]=odkey.split("\\.");
 				return DBWrapper.that.getMember(aa[0]).getMember(aa[1]);
 			case Symbols.TO_STRING2 :
 			case Symbols.TOSTRING1 :
@@ -638,9 +671,12 @@ public final class ObjectWrapper extends Value implements Comparable
 	private HashMap<String,ValueWrapper> vwrps = new HashMap();
 	public ValueWrapper getValueWrapper(int context,String pro,String lang,int pos,boolean oldMode) 
 	{
-		ValueWrapper valw = vwrps.get(pro);
-		if (valw != null)
-			return valw;
+		final boolean isCached = (context == 1);
+		if (isCached) {
+			ValueWrapper valw = vwrps.get(pro);
+			if (valw != null)
+				return valw;
+		}
 		//context = 0,1,2,3,4
 		BasicValueLocator b = new BasicValueLocator();
 		b.context=context;
@@ -649,7 +685,8 @@ public final class ObjectWrapper extends Value implements Comparable
 		b.pos=pos;
 		b.oldMode=oldMode;
 		ValueWrapper res=new ValueWrapper(b,this);
-		vwrps.put(pro, res);
+		if (isCached)
+			vwrps.put(pro, res);
 		return res;
 	}
 

@@ -72,7 +72,7 @@ public class OArray
   /**
    * The type object for an instance of Array.
    */
-  public final static Value TYPE = BuiltinType.makeBuiltinType("oscript.data.OArray");
+  public final static Value TYPE = BuiltinType.makeBuiltinType("oscript.data.OArray"); 
   public final static String PARENT_TYPE_NAME = "oscript.data.OObject";
   public final static String TYPE_NAME        = "Array";
   public final static String[] MEMBER_NAMES   = new String[] {
@@ -102,52 +102,60 @@ public class OArray
   private static final int LAST = 176;
   private static final int PUT_ALL = 80; //Symbols.java
   private static final int POS_TYPE = 69; //Symbols.java
+  private static final int JOIN = 187; //Symbols.java
+  
 	
   public Value getMember(int id, boolean exception) throws PackagedScriptObjectException 
   {
-	  	if (id == SIZE || id == LENGTH) 
-		{
-	  		return new FunctionValueWrapper(new OExactNumber(length()));
-		}
-  		if (id == IS_EMPTY || id == IS_EMPTY2) 
-		{
-	  		return new FunctionValueWrapper(OBoolean.makeBoolean(length() == 0));
-		}
-  		if (id == FIRST) 
-		{
-	  		return new FunctionValueWrapper(
-	  				length() == 0 ? Value.NULL : elementAt(0)
-	  		);
-		}
-  		if (id == LAST) 
-		{
-	  		return new FunctionValueWrapper(
-	  				length() == 0 ? Value.NULL : elementAt(length()-1)
-	  		);
-		}
-		if (id == PUT_ALL) 
-		{
-			return new Value() 
-			{
-				public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+	  	switch(id) 
+	  	{
+	  		case SIZE : 
+	  		case LENGTH :
+		  		return new FunctionValueWrapper(new OExactNumber(length()));
+	  		case IS_EMPTY : 
+	  		case IS_EMPTY2 :
+		  		return new FunctionValueWrapper(OBoolean.makeBoolean(length() == 0));
+	  		case FIRST : 
+		  		return new FunctionValueWrapper(
+		  				length() == 0 ? Value.NULL : elementAt(0)
+		  		);
+	  		case LAST :
+		  		return new FunctionValueWrapper(
+		  				length() == 0 ? Value.NULL : elementAt(length()-1)
+		  		);
+	  		case PUT_ALL :
+				return new Value() 
 				{
-					if (args.length() != 1)						
-				          throw PackagedScriptObjectException.makeExceptionWrapper( new OUnsupportedOperationException("unsupported argument count for oarray putAll!") );  // XXX
-					Value v = args.referenceAt(0).unhand();
-					if (v.bopEquals(Value.NULL).castToBoolean())
+					public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+					{
+						if (args.length() != 1)						
+					          throw PackagedScriptObjectException.makeExceptionWrapper( new OUnsupportedOperationException("unsupported argument count for oarray putAll!") );  // XXX
+						Value v = args.referenceAt(0).unhand();
+						if (v.bopEquals(Value.NULL).castToBoolean())
+							return OArray.this;
+						int s = (int)v.getMember("length").callAsFunction(new Value[0]).castToExactNumber();
+						for (int i=0;i<s;i++)
+							OArray.this.push1(v.elementAt(OExactNumber.makeExactNumber(i)));
 						return OArray.this;
-					int s = (int)v.getMember("length").callAsFunction(new Value[0]).castToExactNumber();
-					for (int i=0;i<s;i++)
-						OArray.this.push1(v.elementAt(OExactNumber.makeExactNumber(i)));
-					return OArray.this;
+					};
+					protected Value getTypeImpl() {return this;};
 				};
-				protected Value getTypeImpl() {return this;};
-			};
-		}
-
-  		if (id == ADD) {
- 			id=PUSH;
-		}
+	  		case ADD :
+	  		case PUSH :
+				return push;
+	  		case JOIN :
+				return new Value() 
+				{
+					public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException 
+					{
+						if (args.length() > 0)
+							return OArray.this.join(args.referenceAt(0));
+						else
+							return OArray.this.join();
+					};
+					protected Value getTypeImpl() {return this;};
+				};
+	  	}
   		return super.getMember(id,exception);
   }
   

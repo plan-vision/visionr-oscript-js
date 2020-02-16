@@ -32,8 +32,17 @@ function JS2JAVA(val)
 	return null;
 };
 
-function JAVA2JS(val) 
-{
+function JAVA2JS(val) { 
+	if (Clazz.instanceOf(val, "oscript.data.Value")) {
+		val=val.castToJavaObject$();
+		if (Clazz.instanceOf(val, "server.ObjectWrapper")) {
+			var od = db.find(val.odkey);
+			if (!od) throw "cnv.JAVA2JS : missing schema "+pro+" of "+val.odkey;
+			var obj = od.byId(val._objId);
+			if (!obj) console.error("cnv.JAVA2JS : missing object "+val.odkey+":"+val._objId);
+			return obj;
+		}
+	}
 	if (Clazz.instanceOf(val, Clazz.array(java.lang.Object, -1))) {
 		// ARRAY
 		var a=[];
@@ -59,5 +68,5 @@ function JAVA2JS(val)
 	} else if (Clazz.instanceOf(val, "java.lang.Boolean")) {
 		return val.booleanValue();
 	}
-	return null;
-};
+	return undefined;
+}
