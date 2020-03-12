@@ -400,6 +400,8 @@ case '/server/ODateTimeValue.js' : require('./site/swingjs/j2s/server/ODateTimeV
 case '/server/SessionWrapper.js' : require('./site/swingjs/j2s/server/SessionWrapper.js');
 case '/server/SystemWrapper.js' : require('./site/swingjs/j2s/server/SystemWrapper.js');
 case '/server/TempValueWrapper.js' : require('./site/swingjs/j2s/server/TempValueWrapper.js');
+case '/server/transaction/DBCachedObject.js' : require('./site/swingjs/j2s/server/transaction/DBCachedObject.js');
+case '/server/transaction/DBProperty.js' : require('./site/swingjs/j2s/server/transaction/DBProperty.js');
 case '/server/ValueWrapper.js' : require('./site/swingjs/j2s/server/ValueWrapper.js');
 case '/oscript/varray/IteratorWrapper.js' : require('./site/swingjs/j2s/oscript/varray/IteratorWrapper.js');
 case '/oscript/varray/List.js' : require('./site/swingjs/j2s/oscript/varray/List.js');

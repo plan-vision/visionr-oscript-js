@@ -23,7 +23,6 @@ import server.ValueWrapper;
 
 //import java.text.DecimalFormat;
 //import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
 
 import bridge.common;
 
@@ -376,6 +375,49 @@ public class base {
 		} catch (ParseException e) {
 			System.err.println("ERROR : "+e);
 		}
-	}	
+	}
+	
+	
+	
+	public static Object callVScriptFunction(Object key,Object body,Object[] args,Object that,Object _super) {
+		//---------------------------------------------------------------------------------------------------------
+		Value t = bridge._evals.get(key);
+		if (t == null) { 
+			try {
+				oscript.OscriptInterpreter.eval("__eval="+body+";");
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+			t=oscript.OscriptInterpreter.getGlobalScope().getMember("__eval").unhand();
+			bridge._evals.put(key.toString(),t);
+		}
+		Value[] a = new Value[args.length];
+		for (int i=0;i<a.length;i++)
+			a[i]=ValueConvertor.convertWithCollections(args[i]);		
+		//------------------------------------------------------------------------
+		oscript.data.BasicScope x = new oscript.data.BasicScope(oscript.OscriptInterpreter.getGlobalScope());
+		x.createMember("this", oscript.data.Reference.ATTR_PUBLIC);
+		x.createMember("super", oscript.data.Reference.ATTR_PUBLIC);
+		x.getMember("this").opAssign(ValueConvertor.convert(that));
+		final Object fsuper = _super;
+		if (_super instanceof Value)
+			x.getMember("super").opAssign((Value)_super);
+		else
+			x.getMember("super").opAssign(new Value() {				
+				@Override
+				public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) {
+					return ((callback)fsuper).call(args);
+				}
+				@Override
+				protected Value getTypeImpl() {
+					return null;
+				}
+			});
+		return ValueConvertor.convertToJavaObject(t.callAsExtends(oscript.util.StackFrame.currentStackFrame(), x, new oscript.data.OArray(a)));
+	}
+	
+	public static interface callback {
+		Value call(Object args);
+	}
 
 }

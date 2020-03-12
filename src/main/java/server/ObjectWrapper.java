@@ -358,7 +358,7 @@ public final class ObjectWrapper extends Value implements Comparable
 						Value v = args.referenceAt(i).unhand();
 						a[i]=ValueConvertor.convertToJavaObject(v);
 					}
-					return ValueConvertor.convert(bridge.callScript(code(),a));
+					return ValueConvertor.convert(bridge.callScript(code(),a,null,null));
 			}
 		}
 		throw new RuntimeException("can't call as function. Object is not a script : "+this.toString());

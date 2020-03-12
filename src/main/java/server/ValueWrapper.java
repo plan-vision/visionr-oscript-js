@@ -103,34 +103,37 @@ public final class ValueWrapper extends ValueWrapperTempReference implements OIn
 		this.obj=obj;
 		this.locator=locator;
 	}
+	private String _forceSchema;
 	//-----------------------------------------------------------------------------------------------------------------------------
-	private static HashMap<String,Value> _scripts = new HashMap();
-	
 	public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) 
 	{
 		Object[] t = new Object[args.length()];
 		for (int i=0;i<args.length();i++)
 			t[i]=ValueConvertor.convertToJavaObject(args.referenceAt(i).unhand());
-		String scode = bridge.getVScriptPropertyDefaultValue(obj.odefkey(), obj.id(), locator.pro);
-		if (scode != null) 
+		//------------------------------------------------------------------------------------------------------------------------
+		String sh = _forceSchema != null ? _forceSchema : obj.getOD();
+		String script = bridge.getVScriptPropertyDefaultValue(sh, locator.pro);
+		if (script == null) throw new RuntimeException("ValueWrapper : can not call as functon : no default value script!");				
+		String pod = bridge.getParentPropertyObjectDef(sh, locator.pro);
+		String pscript = bridge.getVScriptPropertyDefaultValue(pod, locator.pro);
+		while (pscript == script) 
 		{
-			Value f = _scripts.get(scode);
-			if (f == null) {
-				try {
-					OscriptInterpreter.eval("__eval = "+bridge.getVScriptPropertyDefaultValueBody(obj.odefkey(), obj.id(), locator.pro)+";");
-				} catch (ParseException e) {
-					throw new RuntimeException(e);
-				}
-				f = OscriptInterpreter.getGlobalScope().getMember("__eval");
-				_scripts.put(scode,f);
-			}
-			BasicScope x = new BasicScope(OscriptInterpreter.getGlobalScope());
-			x.createMember("this", Reference.ATTR_PUBLIC);
-			x.getMember("this").opAssign(this);
-			x.getMember("super").opAssign(new Evaluator.SuperWrapper(this.obj.odefkey(), this.obj.id(), this.locator.pro));
-			return f.callAsExtends(sf, x, args);
+			pod = bridge.getParentPropertyObjectDef(pod, locator.pro);
+			if (pod == null) {
+				pscript = null;
+				break;
+			}			
 		}
-		return ValueConvertor.convert(bridge.callScriptProperty(obj.odefkey(), obj.id(), locator.pro, t));	
+		//-------------------------------------------
+		Value _super = Value.NULL;
+		if (pod != null) {
+			ValueWrapper c = new ValueWrapper(locator,obj);
+			c._forceSchema = pod;
+			_super = c;
+		}
+		//-------------------------------------------
+		Object r = bridge.callScript(script,t,obj,_super);
+		return ValueConvertor.convert(r);	
 	}
 	//-----------------------------------------------------------------------------------------------------------------------------
 	private Object getLangIdOrPosValue(int newContextLang,int newContextSortID,Object val) {

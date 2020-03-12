@@ -55,20 +55,6 @@ function fnd(odkey,pro) {
 	Clazz.newMeth(C$, '$init$', function() {
 	}, 1);
 
-	Clazz.newMeth(C$,'callVScriptFunction$S$S$OA',function(key, body, args) {
-		var t = C$._evals.get$O(key);
-		if (t == null) {
-			//$I$(2).eval$S(body );
-			$I$(2).eval$S("__eval = " + body + ";");
-			t = $I$(2).getGlobalScope$().getMember$S("__eval").unhand$();
-			C$._evals.put$TK$TV(key, t);
-		}
-		args=args||[];
-		var a = Clazz.array($I$(3), [ args.length ]);
-		for (var i = 0; i < a.length; i++) a[i] = $I$(4).convertWithCollections$O(args[i]);
-		return $I$(4).convertToJavaObject$O(t.callAsFunction$oscript_data_ValueA(a));
-	}, 1);
-
 	//-----------------------------------------------------------------------------------
 	Clazz.newMeth(C$, 'objectDefHasPropery$S$S', function(odkey, code) {
 		var od = db.find(odkey);
@@ -120,8 +106,7 @@ function fnd(odkey,pro) {
 	
 	Clazz.newMeth(C$, 'getObjectValueCount$S$J$S', function(odkey, id, pro) {
 		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
-		var val = obj[pro];if (val == undefined) return 0;
-		if (val instanceof Array) return val.length;return 1;
+		return obj.count(pro);
 	}, 1);
 	Clazz.newMeth(C$, 'require$S$S$OA', function (req, api, args) {
 		var r=require(req);
@@ -247,13 +232,13 @@ function fnd(odkey,pro) {
 		} 
 		var obj = cache.get(id);
 		if (!obj) return null;
-		var val = obj[pro];if (!val) return null;		
-		return JS2JAVA((obj._vals[pro]||{})[lang]);
+		var val = obj._v(pro);if (!val) return null;		
+		return JS2JAVA(v[lang]);
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectI18nValueLanguages$S$J$S', function(odkey, id, pro) {
 		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
 		if (!obj) return null;
-		var val = obj[pro];if (!val) return null;
+		var val = obj._v(pro);if (!val) return null;		
 		return JS2JAVA(Object.keys(val));
 	}, 1);
 	//-----------------------------------------------------------------------------------
@@ -263,7 +248,7 @@ function fnd(odkey,pro) {
 		if (!obj) return null;
 		var val = obj[pro];
 		if (obj instanceof Array) {
-			for (var pos=0;pos<obj.lengt;pos++) {
+			for (var pos=0;pos<obj.length;pos++) {
 				var e = obj[pos];
 				if (e instanceof Date) e=e.getTime();
 				if (e == val)
@@ -277,7 +262,7 @@ function fnd(odkey,pro) {
 		if (!obj) return null;
 		var val = obj[pro];
 		if (obj instanceof Array) {
-			for (var pos=0;pos<obj.lengt;pos++) {
+			for (var pos=0;pos<obj.length;pos++) {
 				var e = obj[pos];
 				if (e.id == valid) return pos;
 			}
@@ -322,94 +307,146 @@ function fnd(odkey,pro) {
 		return JS2JAVA(res);
 	}, 1);
 	//-----------------------------------------------------------------------------------
-	Clazz.newMeth(C$, 'getVScriptPropertyDefaultValue$S$J$S', function (odkey, id, pro) {
-		debugger;
-		return null;
+	Clazz.newMeth(C$, 'getVScriptPropertyDefaultValue$S$S', function (odefkey,pro) {
+		var sh = db.find(odefkey);
+		switch (pro) {
+			case "on_insert_object" : return sh._def.onInsert;
+			case "on_update_object" : return sh._def.onUpdate;
+			case "on_delete_object" : return sh._def.onDelete;
+		}
+		var dval = sh.getProperty(pro).defaultValue;
+		if (!dval) return;
+		return db.core.script.byId(dval.id).code;
 	}, 1);
-	Clazz.newMeth(C$, 'getVScriptPropertyDefaultValueBody$S$J$S', function (odkey, id, pro) {
-		debugger;
-		return null;
-	}, 1);	
 	Clazz.newMeth(C$, 'getObjectOldValuePos$S$J$S$I', function(odkey, id,pro, pos) {
-		debugger;
-		return null;
-	}, 1);
-	Clazz.newMeth(C$, 'getObjectOldValue$S$J$S', function(odkey, id, pro) {
-		debugger;
-		return null;
+		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		if (!obj) return null;
+		var val = obj.OLD[pro];if (!(obj instanceof Array)) return null;
+		return JS2JAVA(val[pos]);
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectOldI18nValue$S$J$S$S', function(odkey, id,pro, lang) {
-		debugger;
-		return null;
-	}, 1);
-	Clazz.newMeth(C$, 'getObjectOldValueCount$S$J$S',function(odkey, id, pro) {
-		debugger;
-		return 0;
+		var cache = storage.ocache.ensureObjectsReady(odkey);
+		if (!cache) {
+			switch (odkey) {
+				case "core.property" : {
+					switch (pro) {
+						case "name" : 
+							var n = storage.defs.proById[id].name || {};
+							return n[lang];
+					}
+				}
+				break
+			}
+			throw "bridge.getObjectI18nValue$S$J$S$S : can not find schema "+odkey;
+		} 
+		var obj = cache.get(id);
+		if (!obj) return null;
+		var val = obj.OLD._v(pro);if (!val) return null;		
+		return JS2JAVA(val[lang]);
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectOldI18nValueLanguages$S$J$S', function(odkey,id, pro) {
-		debugger;
-		return null;
+		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		if (!obj) return null;
+		var val = obj.OLD._v(pro);if (!val) return null;		
+		return JS2JAVA(Object.keys(val));
 	}, 1);
+	
+	
+	Clazz.newMeth(C$, 'getObjectOldValue$S$J$S', function(odkey, id, pro) {
+		var obj = od.get(id);
+		var val = JS2JAVA(obj.OLD[pro]);
+		return val;
+	}, 1);
+	Clazz.newMeth(C$, 'getObjectOldValueCount$S$J$S',function(odkey, id, pro) {
+		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		return obj.OLD.count(pro);
+	}, 1);
+	
+	Clazz.newMeth(C$, 'getObjectOldValuePosition$S$J$S$O', function(odkey, id, pro, val) {
+		if (val instanceof Date) val = val.getTime();
+		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		if (!obj) return null;
+		var val = obj.OLD[pro];
+		if (obj instanceof Array) {
+			for (var pos=0;pos<obj.length;pos++) {
+				var e = obj[pos];
+				if (e instanceof Date) e=e.getTime();
+				if (e == val)
+					return pos;
+			}
+		}
+		return -1;
+	}, 1);
+	Clazz.newMeth(C$, 'getObjectOldValuePositionRel$S$J$SJ', function(odkey, id, pro, valid) {
+		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		if (!obj) return null;
+		var val = obj.OLD[pro];
+		if (obj instanceof Array) {
+			for (var pos=0;pos<obj.length;pos++) {
+				var e = obj[pos];
+				if (e.id == valid) return pos;
+			}
+		}
+		return -1;
+	}, 1);
+	
 	Clazz.newMeth(C$, 'isDeleted$S$J', function(odkey, id) {
-		debugger;
-		return false;
+		var obj = db.find(odkey).byId(id);
+		return JSCORE.transaction.isDeleted(obj);
 	}, 1);
 	Clazz.newMeth(C$, 'isInserted$S$J', function(odkey, id) {
-		debugger;
-		return false;
+		var obj = db.find(odkey).byId(id);
+		return JSCORE.transaction.isInserted(obj);
 	}, 1);
-	Clazz.newMeth(C$, 'callScript$S$OA', function(code, args) {
+	
+	Clazz.newMeth(C$, 'callScript$S$OA$O', function(code, args, that, _super) {
 		var scr = storage.defs.scripts[code];
 		if (scr.lang == "vsc") {
 			// VSC
 			if (!scr.body)
 				scr.body='function ('+scr.params.concat(["in..."]).join(",")+"){ \n"+scr.script+"\n}";
-			return C$.callVScriptFunction$S$S$OA(code,scr.body,args||[]);
+			return bridge.base.callVScriptFunction$O$O$OA$O(code,scr.body,args||[],that,_super);
 		}
-		// JavaScript
+		// JavaScript TODO SUPER
 		if (!scr.fnc)
 			scr.fnc = applyToConstructor(Function,scr.params.concat([scr.script]));
-		return JS2JAVA(src.fnc.apply(null,args));
+		return JS2JAVA(src.fnc.apply(JAVA2JS(that),JAVA2JS(args))); // NO SUPER
 	}, 1);
-	Clazz.newMeth(C$, 'callScriptProperty$S$J$S$OA', function(odkey, id, pro, args) {
-		debugger;
-		return null;
-	}, 1);
-	Clazz.newMeth(C$, 'getPropertyDefaultValueScript$S$S',function(odkey, code) {
-		debugger;
-		return null;
-	}, 1);
-	Clazz.newMeth(C$, 'getObjectOldValuePosition$S$J$S$O', function(odkey, id, pro, val) {
-		debugger;
-		return -1;
-	}, 1);
-	Clazz.newMeth(C$, 'getObjectOldValuePositionRel$S$J$SJ', function(odkey, id, pro, valid) {
-		debugger;
-		return -1;
-	}, 1);
+	
+	
 	Clazz.newMeth(C$, 'deleteObjectValue$S$J$S', function(odkey, id, pro) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		JSCORE.transaction.objimporter.deleteValue(obj,pro);
 	}, 1);
 	Clazz.newMeth(C$, 'deleteObjectValuePos$S$J$S$I', function(odkey, id, pro, pos) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		JSCORE.transaction.objimporter.deleteValuePos(obj,pro,pos);
 	}, 1);
 	Clazz.newMeth(C$, 'deleteObjectValueLang$S$J$S$S', function(odkey, id, pro, lang) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		JSCORE.transaction.objimporter.deleteValueLang(obj,pro,lang);
 	}, 1);
 	Clazz.newMeth(C$, 'copyObjectValue$S$J$S$S$J$S', function(odkey, id, pro, todkey, tid, tpro) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		var tobj = db.find(todkey).byId(tid);
+		JSCORE.transaction.objimporter.copyValue(obj,pro,tobj,tpro);
 	}, 1);
 	Clazz.newMeth(C$, 'setObjectValue$S$J$S$O', function(odkey, id, pro, val) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		JSCORE.transaction.objimporter.setValue(obj,pro,val);
 	}, 1);
 	Clazz.newMeth(C$, 'setObjectValueRel$S$J$S$S$J', function(odkey, id, pro, valodkey, valid) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		var val = db.find(valodkey).byId(valid);
+		JSCORE.transaction.objimporter.setValue(obj,pro,val);
 	}, 1);
 	Clazz.newMeth(C$, 'setObjectValuePos$S$J$S$I$O', function(odkey, id, pro, pos, val) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		JSCORE.transaction.objimporter.setValuePos(obj,pro,pos,val);
 	}, 1);
 	Clazz.newMeth(C$, 'setObjectValueLang$S$J$S$S$S', function(odkey, id, pro, val, lang) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		JSCORE.transaction.objimporter.setValueLang(obj,pro,lang,val);
 	}, 1);
 	Clazz.newMeth(C$, 'pushObjectValue$S$J$S$O', function(odkey, id, pro, val) {
 		debugger;		
@@ -417,9 +454,8 @@ function fnd(odkey,pro) {
 	Clazz.newMeth(C$, 'pushObjectValueRel$S$J$S$S$J', function(odkey, id, pro, valodkey, valid) {
 		debugger;
 	}, 1);
-	Clazz.newMeth(C$, 'isNestedTransaction$', function() {
-		debugger;
-		return false;
+	Clazz.newMeth(C$, 'isNestedTransaction$', function() {		
+		return JSCORE.transaction.hasSavePoint();
 	}, 1);
 	Clazz.newMeth(C$, 'getProgress$', function() {
 		debugger;
@@ -438,10 +474,12 @@ function fnd(odkey,pro) {
 		$I$(2).getGlobalScope$().createMember$S$I("__eval", 0x04000000 /* public > reference.java */);
 		//--------------------------------------------------------------------------
 		window.VSCRIPT={			
-				call : function(key,body,args) {
+				JAVA2JS : JAVA2JS,
+				JS2JAVA : JS2JAVA,
+				call : function(key,body,args,that) {
 					try {
 						if (typeof body == "function") body=body();
-						return JAVA2JS(C$.callVScriptFunction$S$S$OA(key,body,JS2JAVA(args)));
+						return JAVA2JS(bridge.base.callVScriptFunction$O$O$OA$O(key,body,JS2JAVA(args),JS2JAVA(that)));
 					} catch(e) {
 						if (typeof e.getMessage == "function")
 							console.error(e.getMessage());

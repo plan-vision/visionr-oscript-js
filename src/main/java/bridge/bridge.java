@@ -3,39 +3,16 @@ import java.util.HashMap;
  
 import oscript.OscriptInterpreter;
 import oscript.data.Value;
-import oscript.parser.ParseException;
-import server.ValueConvertor;
  
 public class bridge  
 { 
-	public static Object callVScriptFunction(String key,String body,Object[] args) {
-		Value t = bridge._evals.get(key);
-		if (t == null) {
-			try {
-				OscriptInterpreter.eval("__eval="+body+";");
-			} catch (ParseException e) {
-				throw new RuntimeException(e);
-			}
-			t=OscriptInterpreter.getGlobalScope().getMember("__eval").unhand();
-			bridge._evals.put(key,t);
-		}
-		Value[] a = new Value[args.length];
-		for (int i=0;i<a.length;i++)
-			a[i]=ValueConvertor.convertWithCollections(args[i]);
-		return ValueConvertor.convertToJavaObject(t.callAsFunction(a));
-	}
-	//---------------------------------------------------------------------
 	public static String getSchemaName(String odefkeey) {
 		return null; 
 	} 
 	
-	public static String getVScriptPropertyDefaultValue(String odefkeey,long id,String pro) {
+	public static String getVScriptPropertyDefaultValue(String odefkey,String pro) {
 		return null; 
 	}
-	public static String getVScriptPropertyDefaultValueBody(String odefkeey,long id,String pro) {
-		return null;
-	}
-	
 	public static String getPropertyOptionSet(String odefkey,String pro) {
 		// only if option
 		return null;
@@ -126,15 +103,9 @@ public class bridge
 	public static boolean isInserted(String odkey,long id) {
 		return false;
 	}
-	public static Object callScript(String code,Object[] args) {
+	public static Object callScript(String code,Object[] args,Object that,Object _super) {
 		return null;
-	}
-	public static Object callScriptProperty(String odkey,long id,String pro,Object[] args) {
-		return null;
-	}
-	public static String getPropertyDefaultValueScript(String odkey,String code) {
-		return null; // SCRIPT code
-	}
+	}		
 	public static String getParentPropertyObjectDef(String odkey,String pro) {
 		return null; // SCRIPT code
 	}
