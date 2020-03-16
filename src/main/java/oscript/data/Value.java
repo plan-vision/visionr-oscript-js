@@ -848,7 +848,9 @@ public abstract class Value
   public Value callAsExtends( StackFrame sf, Scope scope, MemberTable args )
     throws PackagedScriptObjectException
   {
-    throw PackagedScriptObjectException.makeExceptionWrapper( new OUnsupportedOperationException("can't call as constructor") );
+	  return Value.NULL;
+	// js emulation > cancel 	  
+    // throw PackagedScriptObjectException.makeExceptionWrapper( new OUnsupportedOperationException("can't call as constructor") );
   }
   public final Value callAsExtends( Scope scope, MemberTable args )
     throws PackagedScriptObjectException

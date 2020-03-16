@@ -390,11 +390,13 @@ public class Function extends Type
     if( (fd.id != FunctionPrimaryPrefix.ANON_FXN_ID) && (enclosingScope instanceof ConstructorScope) )
     {
       Scope scope = enclosingScope.getPreviousScope();
-      while( !(scope instanceof ScriptObject) )
+      while(scope != null && !(scope instanceof ScriptObject) )
         scope = scope.getPreviousScope();
-      overriden = scope.getMemberImpl(fd.id);
-      if( overriden != null )
-        overriden = overriden.unhand();
+      if(scope != null) {
+    	  overriden = scope.getMemberImpl(fd.id);
+    	  if( overriden != null )
+    		  overriden = overriden.unhand();
+      }
     }
     
 // XXX seems to cause apple's VM to bus-error... not sure if it causes 

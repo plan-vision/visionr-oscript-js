@@ -400,7 +400,9 @@ public class base {
 		x.createMember("super", oscript.data.Reference.ATTR_PUBLIC);
 		x.getMember("this").opAssign(ValueConvertor.convert(that));
 		final Object fsuper = _super;
-		if (_super instanceof Value)
+		if (_super == null)  
+			x.getMember("super").opAssign(Value.NULL);
+		else if (_super instanceof Value)
 			x.getMember("super").opAssign((Value)_super);
 		else
 			x.getMember("super").opAssign(new Value() {				

@@ -399,20 +399,20 @@ function fnd(odkey,pro) {
 		return JSCORE.transaction.isInserted(obj);
 	}, 1);
 	
-	Clazz.newMeth(C$, 'callScript$S$OA$O', function(code, args, that, _super) {
+	
+	Clazz.newMeth(C$, 'callScript$S$OA$O$O', function (code, args, that, _super) {
 		var scr = storage.defs.scripts[code];
 		if (scr.lang == "vsc") {
 			// VSC
 			if (!scr.body)
 				scr.body='function ('+scr.params.concat(["in..."]).join(",")+"){ \n"+scr.script+"\n}";
-			return bridge.base.callVScriptFunction$O$O$OA$O(code,scr.body,args||[],that,_super);
+			return bridge.base.callVScriptFunction$O$O$OA$O$O(code,scr.body,args||[],that,_super);
 		}
 		// JavaScript TODO SUPER
 		if (!scr.fnc)
 			scr.fnc = applyToConstructor(Function,scr.params.concat([scr.script]));
 		return JS2JAVA(src.fnc.apply(JAVA2JS(that),JAVA2JS(args))); // NO SUPER
-	}, 1);
-	
+	}, 1);	
 	
 	Clazz.newMeth(C$, 'deleteObjectValue$S$J$S', function(odkey, id, pro) {
 		var obj = db.find(odkey).byId(id);
@@ -479,7 +479,7 @@ function fnd(odkey,pro) {
 				call : function(key,body,args,that) {
 					try {
 						if (typeof body == "function") body=body();
-						return JAVA2JS(bridge.base.callVScriptFunction$O$O$OA$O(key,body,JS2JAVA(args),JS2JAVA(that)));
+						return JAVA2JS(bridge.base.callVScriptFunction$O$O$OA$O$O(key,body,JS2JAVA(args),JS2JAVA(that),JS2JAVA()));
 					} catch(e) {
 						if (typeof e.getMessage == "function")
 							console.error(e.getMessage());
