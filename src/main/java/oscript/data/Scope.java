@@ -89,6 +89,8 @@ public abstract class Scope extends Value
    */
   public Value getSuper()
   {
+	Value v = this.getMember("super",false);
+	if (v != null) return v;
     return previous.getSuper();
   }
   
@@ -101,6 +103,8 @@ public abstract class Scope extends Value
    */
   public Value getThis()
   {
+	Value v = this.getMember("this",false);
+	if (v != null) return v;
     return previous.getThis();
   }
   

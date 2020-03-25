@@ -177,10 +177,10 @@ function fnd(odkey,pro) {
 	}, 1);
 	var _topodcache={};
 	Clazz.newMeth(C$, 'getTopObjectDef$S', function(odkey) {
-		var t = _topodcache[key];if (t) return t;
-		var t = root.db.find(odkey);
+		var t = _topodcache[odkey];if (t) return t;
+		var t = db.find(odkey);
 		while (t.parentSchema) t=t.parentSchema;
-		return _topodcache[key]=t.KEY;
+		return _topodcache[odkey]=t.KEY;
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectDefProperyId$S$S', function(odkey, code) {
 		var od = db.find(odkey);if (!od) return;
@@ -233,7 +233,7 @@ function fnd(odkey,pro) {
 		var obj = cache.get(id);
 		if (!obj) return null;
 		var val = obj._v(pro);if (!val) return null;		
-		return JS2JAVA(v[lang]);
+		return JS2JAVA(val[lang]);
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectI18nValueLanguages$S$J$S', function(odkey, id, pro) {
 		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
@@ -389,7 +389,11 @@ function fnd(odkey,pro) {
 		}
 		return -1;
 	}, 1);
-	
+
+	Clazz.newMeth(C$, 'getUser$', function () {
+		return JS2JAVA(session.user);
+	}, 1);
+
 	Clazz.newMeth(C$, 'isDeleted$S$J', function(odkey, id) {
 		var obj = db.find(odkey).byId(id);
 		return JSCORE.transaction.isDeleted(obj);
@@ -413,6 +417,24 @@ function fnd(odkey,pro) {
 			scr.fnc = applyToConstructor(Function,scr.params.concat([scr.script]));
 		return JS2JAVA(src.fnc.apply(JAVA2JS(that),JAVA2JS(args))); // NO SUPER
 	}, 1);	
+
+	Clazz.newMeth(C$, 'deleteObject$S$J', function(odkey, id) {
+		var obj = db.find(odkey).byId(id);
+		obj.delete();
+	}, 1);
+
+	Clazz.newMeth(C$, 'newObject$S$O', function(args) {
+		var od = db.find(odkey).byId(id);
+		// https://stackoverflow.com/questions/1606797/use-of-apply-with-new-operator-is-this-possible
+		function construct(constructor, args) {
+		    function F() {
+		        return constructor.apply(this, args);
+		    }
+		    F.prototype = constructor.prototype;
+		    return new F();
+		}		
+		return JS2JAVA(construct(od,JAVA2JS(args)));		
+	}, 1);
 	
 	Clazz.newMeth(C$, 'deleteObjectValue$S$J$S', function(odkey, id, pro) {
 		var obj = db.find(odkey).byId(id);
@@ -449,10 +471,13 @@ function fnd(odkey,pro) {
 		JSCORE.transaction.objimporter.setValueLang(obj,pro,lang,val);
 	}, 1);
 	Clazz.newMeth(C$, 'pushObjectValue$S$J$S$O', function(odkey, id, pro, val) {
-		debugger;		
+		var obj = db.find(odkey).byId(id);
+		JSCORE.transaction.objimporter.pushObjectValue(obj,pro,val);
 	}, 1);
 	Clazz.newMeth(C$, 'pushObjectValueRel$S$J$S$S$J', function(odkey, id, pro, valodkey, valid) {
-		debugger;
+		var obj = db.find(odkey).byId(id);
+		var val = db.find(valodkey).byId(valid);
+		JSCORE.transaction.objimporter.pushObjectValue(obj,pro,val);
 	}, 1);
 	Clazz.newMeth(C$, 'isNestedTransaction$', function() {		
 		return JSCORE.transaction.hasSavePoint();
@@ -490,6 +515,7 @@ function fnd(odkey,pro) {
 		};
 		//window.VSCRIPT.call("test","function(){ return 1+2;}",[])
 		System.out.println$S(">>> VSC JS BOOT <<<");
+		window.Error = Clazz._Error; // undo swingjs override 
 	}, 1);
 	Clazz.newMeth(C$);
 })();

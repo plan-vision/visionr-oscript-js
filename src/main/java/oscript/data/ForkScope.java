@@ -120,6 +120,8 @@ public class ForkScope extends Scope
    */
   public Value getSuper()
   {
+	Value v = this.getMember("super",false); 
+	if (v != null) return v;	 
     return obj.getSuper();
   }
   

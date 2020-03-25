@@ -957,7 +957,7 @@ public final class ValueWrapper extends ValueWrapperTempReference implements OIn
 			} else if (!proIsMultiple()) {
 				Value vv = ValueConvertor.convert(locator.oldMode ? bridge.getObjectValue(obj.odefkey(), obj.id(), locator.pro) : bridge.getObjectValue(obj.odefkey(), obj.id(), locator.pro));
 				if (vv.bopEquals(val).castToBoolean()) return;	// SAME ? SKIP 
-				bridge.setObjectValue(obj.odefkey(), obj.id(),locator.pro,ValueConvertor.convertToJavaObject(vv));
+				bridge.setObjectValue(obj.odefkey(), obj.id(),locator.pro,ValueConvertor.convertToJavaObject(val));
 			} else {
 				// PRO IS MULTIPLE
 				Object o = ValueConvertor.convertToJavaObject(val.castToJavaObject());

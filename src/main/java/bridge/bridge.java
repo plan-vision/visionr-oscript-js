@@ -139,6 +139,13 @@ public class bridge
 		return -1;
 	}
 	//---------------------------
+	public static void deleteObject(String odefkey,long id) {
+	}
+	
+	public static Value newObject(String odefkey,Object args) {
+		return null;
+	}
+	
 	public static void deleteObjectValue(String odefkey,long id,String pro) {
 		// WHOLE VALUE
 	}
@@ -178,7 +185,8 @@ public class bridge
 	public static Object require(String require,String api,Object[] args) {
 		return null;
 	}
-
+	
+	public static Value getUser() { return null; } 
 	//---------------------------------------------------------------
 	static HashMap<String,Value> _evals=new HashMap();
 	public static void boostrap() {

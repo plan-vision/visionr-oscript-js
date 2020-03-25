@@ -18,19 +18,21 @@ public class DBWrapper extends Value {
 
 	private Map _map;
 	public final static DBWrapper that = new DBWrapper();
-	
-	private static HashMap<String,ObjectWrapper> _mods = new HashMap();
+
+	private static HashMap<String, ObjectWrapper> _mods = new HashMap();
+
 	private DBWrapper() {
 		super();
 	}
 
-	private ObjectWrapper getByCode(String code) 
-	{
+	private ObjectWrapper getByCode(String code) {
 		ObjectWrapper t = _mods.get(code);
-		if (t != null) return t;
-		if (!bridge.hasModule(code)) return null;
+		if (t != null)
+			return t;
+		if (!bridge.hasModule(code))
+			return null;
 		t = ObjectWrapper.makeModule(code, true);
-		_mods.put(code,t);
+		_mods.put(code, t);
 		return t;
 	}
 
@@ -40,28 +42,26 @@ public class DBWrapper extends Value {
 
 	private boolean contains(Object o) {
 		if (o instanceof Number)
-			return bridge.getModuleById(((Number)o).longValue()) != null;
+			return bridge.getModuleById(((Number) o).longValue()) != null;
 		if (o instanceof String)
-			return bridge.hasModule(((String)o));
+			return bridge.hasModule(((String) o));
 		return false;
 	}
-	
+
 	private void commit() {
-		// TODO COMMIT 
+		// TODO COMMIT
 	}
 
-	private Value get(Object key) {		
+	private Value get(Object key) {
 		Value r = null;
 		if (key instanceof String)
 			r = getByCode((String) key);
 		if (r != null)
 			return r;
 		if (key == null)
-			throw new MissingResourceException(
-					"Accessing missing object : NULL", getClass().getName(),
-					"NULL");
-		throw new MissingResourceException("Accessing missing object : "
-				+ key.toString(), getClass().getName(), key.toString());
+			throw new MissingResourceException("Accessing missing object : NULL", getClass().getName(), "NULL");
+		throw new MissingResourceException("Accessing missing object : " + key.toString(), getClass().getName(),
+				key.toString());
 	}
 
 	@Override
@@ -73,8 +73,7 @@ public class DBWrapper extends Value {
 		Object o = val.castToJavaObject();
 		if (o instanceof String) {
 			String s = (String) o;
-			if (s.contains("_")) 
-			{
+			if (s.contains("_")) {
 				int p1 = s.indexOf('_');
 				String tod = s.substring(0, p1);
 				String tid = s.substring(p1 + 1);
@@ -105,6 +104,30 @@ public class DBWrapper extends Value {
 	{
 		switch (symbol) 
 		{
+			case Symbols.CURRENT_SESSION:
+				return new Value() {
+					public Value callAsFunction(StackFrame sf,
+							oscript.util.MemberTable args) {
+						return new Value() {
+							public Value getMember(int id, boolean exception) {
+								switch (Symbol.getSymbol(id).castToString()) {
+									case "user" :
+										return bridge.getUser();
+								}
+								return super.getMember(id,exception);
+							}
+							
+							@Override
+							protected Value getTypeImpl() {
+								return this;
+							}
+						};
+					}	
+					@Override
+					protected Value getTypeImpl() {
+						return this;
+					}
+				};
 			case Symbols.CONTAINS:
 				return new Value() {
 					public Value callAsFunction(StackFrame sf,
@@ -178,8 +201,7 @@ public class DBWrapper extends Value {
 	@Override
 	public Value bopInstanceOf(Value val) throws PackagedScriptObjectException {
 		Object o = val.castToJavaObject();
-		return OBoolean.makeBoolean(o instanceof ObjectWrapper
-				|| o instanceof DBWrapper);
+		return OBoolean.makeBoolean(o instanceof ObjectWrapper || o instanceof DBWrapper);
 	}
 
 }

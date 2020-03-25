@@ -79,7 +79,15 @@ public class FunctionScope extends BasicScope
    */
   public Value getSuper()
   {
-    return new OSuper( this, fxn.getOverriden() );
+	// visionr skip
+    //return new OSuper( this, fxn.getOverriden() );
+	Scope p = this;
+	while (p != null) {
+		Value v = p.getMember("super",false);
+		if (v != null) return v;
+		p = p.previous;
+	}
+	throw new RuntimeException("FunctionScope : can not find super!"); 
   }
   
   /**
@@ -92,10 +100,18 @@ public class FunctionScope extends BasicScope
    */
   public Value getThis( Value val )
   {
-    if( fxn == val.unhand() )
-      return new OThis(this);
-    return super.getThis(val);
+      // visionr skip 
+      // if( fxn == val.unhand() ) return new OThis(this);	  
+	  Scope p = this;
+	  while (p != null) {
+		  Value v = p.getMember("this",false);
+		  if (v != null) return v;
+		  p = p.previous;
+	  }
+	  throw new RuntimeException("FunctionScope : can not find this!"); 
   }
+
+  
   
   /**
    * Lookup the "callee" within a scope.  The "callee" is the first scope

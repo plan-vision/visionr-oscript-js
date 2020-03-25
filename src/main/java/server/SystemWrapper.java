@@ -108,6 +108,15 @@ public class SystemWrapper extends OString {
 				}
 			};
 		}
+		if (symbol == Symbols.CLEAR_WEB_CACHE_ENTRY_TYPE)
+			return new Value() {
+				public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) throws PackagedScriptObjectException {
+					return Value.NULL;
+				}	
+				@Override
+				protected Value getTypeImpl() { return this; }
+			};
+			
 		return Value.NULL;
 	}
 

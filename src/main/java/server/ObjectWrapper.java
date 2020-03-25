@@ -5,6 +5,7 @@ import java.util.HashMap;
 import bridge.bridge;
 
 import oscript.data.FunctionValueWrapper;
+import oscript.data.OArray;
 import oscript.data.OBoolean;
 import oscript.data.OExactNumber;
 import oscript.data.OString;
@@ -119,7 +120,9 @@ public final class ObjectWrapper extends Value implements Comparable
 			return JSConverter.JS2VR(cb.execute(a));
 		}
 		return DBObjImporter.importObject(tr,od,code,Mode.INSERT,DBConstants.ALL_PROJECT_ID,objectDefMemoryMode,transactionLevel).getObjectWrapper();*/
-		// TODO Auto-generated catch block
+		// TODO Auto-generated catch bloc
+		OArray a = new OArray(args);
+		return bridge.newObject(odkey,a);
 		throw new RuntimeException("Error importing object : NOT IMPLEMENTED!");
 	}
 
@@ -132,14 +135,7 @@ public final class ObjectWrapper extends Value implements Comparable
 	}
 
 	public void delete() {
-		/*DBObject obj = getDBObject();
-		VRSessionContext context = getAppSessionContext();
-		try {
-			DBObjImporter.deleteObject(context.getGlobalTransaction(),obj);
-		} catch (VException e) {
-			throw new RuntimeException("On deleting context: " + e.getMessage(),e);
-		}*/
-		throw new RuntimeException("ObjectWrapper.delete() : NOT IMPLEMENTED!");
+		bridge.deleteObject(_objSchema,_objId); 
 	}
 	
 	public Value elementAt(Value val) {
@@ -205,9 +201,14 @@ public final class ObjectWrapper extends Value implements Comparable
 		if (resolveChildren) 
 		{
 			if (type == TYPE_MODULE) {
-				String module = bridge.getModuleById(_objId);
+				String module = bridge.getModuleById(_objId); 
 				if (bridge.moduleHasChild(module, code))
 					return this.elementAt(new OString(code));
+				else {
+					// resolve dummy 
+					if (code.startsWith("history_")) 
+						return Value.NULL; 
+				}
 			} else if (type == TYPE_OBJECTDEF) {
 				if (bridge.objectDefHasPropery(odkey, code))
 					return this.elementAt(new OString(code));
@@ -236,6 +237,9 @@ public final class ObjectWrapper extends Value implements Comparable
 					};
 				}
 				p=code;
+			} else {
+				if (symbol == Symbols.IS_EMPTY)	// hack for db.currentSession().user.is_empty
+					return new OBoolean(false);
 			}
 		}
 		if (p == null)
@@ -455,6 +459,17 @@ public final class ObjectWrapper extends Value implements Comparable
 	
 	private Value _resolveObjectDef(int symbol) {
 		switch (symbol) {
+
+			case Symbols.CLEAR_GLOBAL_CACHE : 
+				return new Value() {
+					@Override
+					protected Value getTypeImpl() {return null;}
+					@Override
+					public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) {
+						return Value.NULL;
+					}
+				};				
+		
 			case Symbols.CONTAINS : 
 					return new Value() 
 					{

@@ -145,13 +145,125 @@ public class base {
 				};
 			}
 		});
-		
+
+		s.createMember("core", Reference.ATTR_PUBLIC);
+		s.getMember("core").opAssign(new Value() {
+
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}
+			@Override
+			public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+				switch (Symbol.getSymbol(id).castToString()) 
+				{
+					case "misc" : return new Value() {
+						@Override
+						protected Value getTypeImpl() {
+							return null;
+						}
+						@Override
+						public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+							switch (Symbol.getSymbol(id).castToString()) {
+								case "historizeDeletedObject" : 
+								case "historizeValue" :
+									return new Value() {
+										@Override
+										public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+											// no impl!
+											return Value.NULL;
+										}
+
+										@Override
+										protected Value getTypeImpl() {
+											return null;
+										}
+									};
+							}
+							return super.getMember(id,exception);
+						}			
+					};
+				} 
+				return super.getMember(id,exception);
+			}			
+		});
+
 		s.createMember("java", Reference.ATTR_PUBLIC);
 		s.getMember("java").opAssign(new Value() {		
 			@Override
 			public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
 				switch (Symbol.getSymbol(id).castToString()) 
 				{
+					case "math" :
+						return new Value() {
+							@Override
+							protected Value getTypeImpl() {return null;}
+							public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+								switch (Symbol.getSymbol(id).castToString()) 
+								{
+									case "randomUUID" :
+										return new Value() {
+											@Override
+											protected Value getTypeImpl() {return null;}
+											public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+												return randomUUID();
+											}
+										};
+								}
+								return super.getMember(id, exception);
+							}
+						};
+					case "string" :
+						return new Value() {
+							@Override
+							protected Value getTypeImpl() {return null;}
+							public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+								switch (Symbol.getSymbol(id).castToString()) 
+								{
+									case "format" :
+										return new Value() {
+											public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+												switch (Symbol.getSymbol(id).castToString()) 
+												{
+													case "formatNumber" :
+														return new Value() {
+															@Override
+															public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+																String format = args.referenceAt(0).castToString(); 
+																long num = args.referenceAt(1).castToExactNumber();
+																String nstr = num+"";
+																int nz = 0;
+																for (int pos = 0;pos < format.length(); pos++) 
+																	if (format.charAt(pos) == '0')
+																		nz++;
+																while (nstr.length() < nz) nstr="0"+nstr;
+																//---------------------------------------------
+																int cz = 0;
+																String res = "";  																		
+																for (int pos = 0;pos < format.length(); pos++) {
+																	char c = format.charAt(pos); 
+																	if (c == '0') {
+																		res+=nstr.charAt(cz);
+																		cz++;
+																	} else {
+																		res+=c;
+																	}
+																}																
+																return new OString(res);
+															}															
+															@Override
+															protected Value getTypeImpl() {return null;}
+														};
+												}
+												return super.getMember(id, exception);
+											}											
+											@Override
+											protected Value getTypeImpl() {return null;}
+										};
+								}
+								return super.getMember(id, exception);
+							}
+						};						
 					case "log" : 
 						return new Value() {
 							@Override
@@ -354,6 +466,16 @@ public class base {
 		*/
 	}
 	
+
+	private static String b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+	private static Value randomUUID() {		
+		StringBuffer b = new StringBuffer();
+		for (int i = 0; i < 22; i++) {
+			int c = (int)(Math.random()*63.0);
+			b.append(b64chars.charAt(c));
+		}
+		return OString.makeString(b.toString());
+	}
 	
 	public static void GLOB(String path,String body) {
 		//--------------------------------
@@ -376,7 +498,7 @@ public class base {
 			System.err.println("ERROR : "+e);
 		}
 	}
-	
+
 	
 	
 	public static Object callVScriptFunction(Object key,Object body,Object[] args,Object that,Object _super) {

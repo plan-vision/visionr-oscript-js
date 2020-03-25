@@ -80,17 +80,6 @@ public class ConstructorScope extends FunctionScope
     previous.mixin(val);
   }
   
-  /**
-   * Lookup the "this" within a scope.  The "this" is actually a union of
-   * this scope which contains private members and args, and the script
-   * object itself.
-   * 
-   * @return the "this" ScriptObject within this scope
-   */
-  public Value getThis()
-  {
-    return new OThis(this);
-  }
 }
 
 
