@@ -1,9 +1,6 @@
 package server;
-import java.util.HashMap;
 import java.util.Iterator;
 import bridge.bridge;
-import oscript.OscriptInterpreter;
-import oscript.data.BasicScope;
 import oscript.data.BuiltinType;
 import oscript.data.FunctionValueWrapper;
 import oscript.data.JavaBridge;
@@ -12,13 +9,11 @@ import oscript.data.OBoolean;
 import oscript.data.OExactNumber;
 import oscript.data.OInexactInterface;
 import oscript.data.OString;
-import oscript.data.Reference;
 import oscript.data.Symbol;
 import oscript.data.Symbols;
 import oscript.data.Value;
 import oscript.data.ValueWrapperTempReference;
 import oscript.exceptions.PackagedScriptObjectException;
-import oscript.parser.ParseException;
 import oscript.util.StackFrame;
 import oscript.varray.Map;
 import oscript.varray.MapKeyValueReference;
@@ -521,34 +516,39 @@ public final class ValueWrapper extends ValueWrapperTempReference implements OIn
 	 //-----------------------------------------------------------------------------------------------------------------------------
 	  public Value getMember( int id, boolean exception )
 	  {
-		    Value val = resolve(id);
-		    if( val != null )
-		      return val;
-		    val = get();
-		    
-		    String optionSet = proOptionSet();
-		    if (optionSet != null) 
-		    {
-		    	if (val instanceof FinalValue) {
-		    		FinalValue fv = (FinalValue)val;
-		    		Value vl = fv.getOValue();
-		    		if (vl instanceof OBoolean) 
-		    		{
-		    			if (id != Symbols.CAST_TO_BOOLEAN) {
-		    				ObjectWrapper obj;
-			    			if (vl.castToBoolean())
-			    				obj = ObjectWrapper.makeObject("core.option", 1);
-			    			else 
-			    				obj = ObjectWrapper.makeObject("core.option", 0);
-			    			return obj.getMember(id,exception);
-		    			}
-		    		}
-		    	}
-		    }
-		    //--------------------------------------------------------------------------------------------------------
-			if (val != null && val != Value.NULL)
-				return val.getMember(id,exception);
-			return super.getMember( id,exception);
+		  try {
+			    Value val = resolve(id);
+			    if( val != null )
+			      return val;
+			    val = get();
+			    
+			    String optionSet = proOptionSet();
+			    if (optionSet != null) 
+			    {
+			    	if (val instanceof FinalValue) {
+			    		FinalValue fv = (FinalValue)val;
+			    		Value vl = fv.getOValue();
+			    		if (vl instanceof OBoolean) 
+			    		{
+			    			if (id != Symbols.CAST_TO_BOOLEAN) {
+			    				ObjectWrapper obj;
+				    			if (vl.castToBoolean())
+				    				obj = ObjectWrapper.makeObject("core.option", 1);
+				    			else 
+				    				obj = ObjectWrapper.makeObject("core.option", 0);
+				    			return obj.getMember(id,exception);
+			    			}
+			    		}
+			    	}
+			    }
+			    //--------------------------------------------------------------------------------------------------------
+				if (val != null && val != Value.NULL)
+					return val.getMember(id,exception);
+				return super.getMember( id,exception);
+		  } catch (Throwable e) {
+			  System.err.println(">> exception resolving value "+obj.getOD()+"."+locator.pro+"@"+locator.context+"!");
+			  throw e;
+		  }
 	  }
 		
 	final public boolean containsFinalValue() {
@@ -956,8 +956,14 @@ public final class ValueWrapper extends ValueWrapperTempReference implements OIn
 				bridge.setObjectValueLang(obj.odefkey(), obj.id(),locator.pro,val.toString(),lang);
 			} else if (!proIsMultiple()) {
 				Value vv = ValueConvertor.convert(locator.oldMode ? bridge.getObjectValue(obj.odefkey(), obj.id(), locator.pro) : bridge.getObjectValue(obj.odefkey(), obj.id(), locator.pro));
-				if (vv.bopEquals(val).castToBoolean()) return;	// SAME ? SKIP 
-				bridge.setObjectValue(obj.odefkey(), obj.id(),locator.pro,ValueConvertor.convertToJavaObject(val));
+				if (vv.bopEquals(val).castToBoolean()) return;	// SAME ? SKIP
+				Object jv = ValueConvertor.convertToJavaObject(val);
+				if (!(jv instanceof ObjectWrapper))
+					bridge.setObjectValue(obj.odefkey(), obj.id(),locator.pro,jv);
+				else {
+					ObjectWrapper jvo = (ObjectWrapper)jv;
+					bridge.setObjectValueRel(obj.odefkey(), obj.id(),locator.pro,jvo.getOD(),jvo.getID());
+				}
 			} else {
 				// PRO IS MULTIPLE
 				Object o = ValueConvertor.convertToJavaObject(val.castToJavaObject());
@@ -1035,7 +1041,12 @@ public final class ValueWrapper extends ValueWrapperTempReference implements OIn
 			// multiple -> pos
 			if (proIsI18n()) throw new RuntimeException("By updating i18n property select language first!");
 			Object o = ValueConvertor.convertToJavaObject(val.castToJavaObject());
-			bridge.setObjectValuePos(obj.odefkey(), obj.id(), locator.pro, locator.pos, o);
+			if (!(o instanceof ObjectWrapper))
+				bridge.setObjectValuePos(obj.odefkey(), obj.id(), locator.pro, locator.pos, o);
+			else {
+				ObjectWrapper oo = (ObjectWrapper)o;
+				bridge.setObjectValuePosRel(obj.odefkey(), obj.id(), locator.pro, locator.pos,oo.getOD(),oo.getID());
+			}
 		} else if (locator.context == 4) {
 			// i18n lang
 			Object o = ValueConvertor.convertToJavaObject(val.castToJavaObject());

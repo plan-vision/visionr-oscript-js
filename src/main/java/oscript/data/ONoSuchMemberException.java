@@ -21,6 +21,7 @@
 
 package oscript.data;
 
+import bridge.bridge;
 
 /**
  * At some point, we could perhaps make this a script type...
@@ -50,6 +51,7 @@ public class ONoSuchMemberException extends OException
   public ONoSuchMemberException( Value type, String name )
   {
     this( "no such member \"" + name + "\" in " + type.castToString() );
+	bridge.beforeException();
   }
   
   /*=======================================================================*/

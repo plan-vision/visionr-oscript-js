@@ -38,7 +38,11 @@ public class Map extends Value {
 	protected boolean isCodeUnique;
 	protected boolean isIdUnique;
 	protected boolean objMapsValid=false;
+	protected boolean forceResolvable=false;
 	
+	public void setForceResolvable(boolean val) {
+		forceResolvable=val;
+	}	
 	protected TreeMap<String,Object> idMap=null;
 	protected TreeMap<String,Object> codeMap=null;
 	protected MultiMap objMap=null;
@@ -1026,9 +1030,19 @@ public class Map extends Value {
 				};
 			}
 		}
+		if (forceResolvable) 
+		{
+			Value v = this.elementAt(Symbol.getSymbol(symbol)).unhand();
+			if (v instanceof Map) {
+				// propagate
+				((Map)v).forceResolvable=true;
+			}
+			return v;			
+		}
 		return null;
 	}
 
+	
 	@Override
 	protected Value getTypeImpl() {
 		return this;

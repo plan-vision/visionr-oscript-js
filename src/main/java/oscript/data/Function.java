@@ -322,39 +322,33 @@ public class Function extends Type
     /**
      * A helper to populate a fxn-scope with args
      */
-    public final void addArgs( FunctionScope fxnScope, MemberTable args )
+    public final void addArgs( FunctionScope fxnScope, MemberTable args ) 
     {
-      int len = (args == null) ? 0 : args.length();
-      
-      if( (len == nargs) || (varargs && (len >= nargs)) )
-      {
+    	int len = (args == null) ? 0 : args.length();
         for( int i=0; i<nargs; i++ )
         {
           int id   = argIds[2*i];
           int attr = argIds[2*i+1];
-          
-          fxnScope.createMember( id, attr ).opAssign(args.referenceAt(i));
-        }
-        
+          if (i < len)
+        	  fxnScope.createMember( id, attr ).opAssign(args.referenceAt(i));
+          else
+        	  fxnScope.createMember( id, attr ).opAssign(Value.NULL);
+        }        
         if(varargs)
         {
           int id   = argIds[2*nargs];
           int attr = argIds[2*nargs+1];
-          
-          // XXX in theory, it should be possible to bring back an optimization
-          // to avoid the copy, if nargs==0....
-          
-          OArray arr = new OArray( len - nargs );
-          for( int i=nargs; i<len; i++ )
-            arr.elementAt(i-nargs).opAssign( args.referenceAt(i) );
-          
-          fxnScope.createMember( id, attr ).opAssign(arr);
+          int nex = len-nargs;
+          if (nex <= 0) {
+        	  OArray arr = new OArray(0);
+        	  fxnScope.createMember( id, attr ).opAssign(arr);
+          } else {
+              OArray arr = new OArray( nex );
+              for( int i=nargs; i<len; i++ )
+                arr.elementAt(i-nargs).opAssign( args.referenceAt(i) );
+              fxnScope.createMember( id, attr ).opAssign(arr);
+          }
         }
-      }
-      else
-      {
-        throw PackagedScriptObjectException.makeExceptionWrapper( new OIllegalArgumentException("wrong number of args!") );
-      }
     }
     
     public Value getName()

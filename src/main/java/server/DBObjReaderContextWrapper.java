@@ -22,6 +22,7 @@ public final class DBObjReaderContextWrapper extends AbstractReference
 	public String odefkey;
 	private String condition;
 	protected HashMap<String,Object> params = new HashMap();
+	//private boolean isData;
 	
 	public DBObjReaderContextWrapper( String odefkey, String condition) {
 		this.odefkey=odefkey;
@@ -33,7 +34,8 @@ public final class DBObjReaderContextWrapper extends AbstractReference
 	Value _result = null;
 	private Value check() {
 		if (_result != null) return _result;
-		Object[] r = bridge.SELECT(odefkey,condition, params);
+		
+		Object[] r = bridge.SELECT(odefkey,condition, params,loadMode);
 		Map res = new Map();
 		for (Object k : r)
 			res.put((ObjectWrapper)k);
@@ -105,7 +107,7 @@ public final class DBObjReaderContextWrapper extends AbstractReference
 			 case Symbols.LOAD_MODE : 
 				 return new OString(loadMode) 
 				 {
-						public void opAssign(Value val) {}
+						public void opAssign(Value val) {loadMode=val.castToString();}
 						@Override
 						protected Value getTypeImpl() {
 							return this;
@@ -159,6 +161,33 @@ public final class DBObjReaderContextWrapper extends AbstractReference
 						 return this;
 					};
 				 };
+			 case Symbols.IS_ACCESS_ENABLED :
+				 return new OBoolean(true) 
+				 {
+						public void opAssign(Value val) {
+							boolean enabled = val.castToBoolean();
+							if (!enabled)
+								System.err.println("LOCAL DBObjReaderContextWrapper : access enabled not implemented. TODO!");							
+						}
+						@Override
+						protected Value getTypeImpl() {
+							return this;
+						}
+				 };	
+			 case Symbols.IS_RESULT_MULTIPLE_COLS :
+				 return new OBoolean(false/*isData*/) 
+				 {
+						public void opAssign(Value val) {
+							//isData=true;
+						}
+						@Override
+						protected Value getTypeImpl() {
+							return this;
+						}
+				 };	
+				 
+				 
+
 		}
 		return null;
 	}

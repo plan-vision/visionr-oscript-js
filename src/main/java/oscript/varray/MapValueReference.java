@@ -93,6 +93,8 @@ public class MapValueReference extends oscript.data.AbstractReference {
 			Value val = get();
 			if (val == null)
 				return super.getMember(id, exception);
+			if (parent.forceResolvable && val instanceof Map)
+				((Map)val).forceResolvable=true;
 			return val.getMember(id, exception);
 		}
 

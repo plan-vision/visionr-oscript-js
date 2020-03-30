@@ -362,6 +362,7 @@ case '/java/util/Calendar' : require('./site/swingjs/j2s/java/util/Calendar');
 case '/java/util/TimeZone' : require('./site/swingjs/j2s/java/util/TimeZone');
 case '/sun/util/calendar/ZoneInfo' : require('./site/swingjs/j2s/sun/util/calendar/ZoneInfo');
 case '/sun/util/resources/LocaleData' : require('./site/swingjs/j2s/sun/util/resources/LocaleData');
+case '/java/lang/reflect/Array' : require('./site/swingjs/j2s/java/lang/reflect/Array');
 case '/java/util/ResourceBundle' : require('./site/swingjs/j2s/java/util/ResourceBundle');
 case '/java/io/ByteArrayInputStream' : require('./site/swingjs/j2s/java/io/ByteArrayInputStream');
 case '/java/io/InputStream' : require('./site/swingjs/j2s/java/io/InputStream');

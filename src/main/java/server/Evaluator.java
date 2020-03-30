@@ -1,10 +1,6 @@
 package server;
 
 import java.io.File;
-import bridge.bridge;
-import oscript.data.Value;
-import oscript.util.MemberTable;
-import oscript.util.StackFrame;
 
 public class Evaluator 
 {

@@ -4,6 +4,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 
 import bridge.bridge;
 import oscript.data.OArray;
@@ -11,6 +12,7 @@ import oscript.data.Value;
 import oscript.data.ValueWrapperTempReference;
 import oscript.util.StackFrame;
 import oscript.varray.Map;
+import oscript.varray.ObjMultipleMap;
 import oscript.varray.Vector;
 
 /**
@@ -27,7 +29,7 @@ public class ValueConvertor
 	public static Value convertWithCollections(Object obj) 
 	{
 		 if (obj instanceof java.util.Map) {
-			return new Map((java.util.Map)obj);
+			 return convertMap((java.util.Map)obj);
 		 } else if (obj instanceof Collection) {
 			return new Vector((Collection)obj);
 		 }
@@ -47,11 +49,31 @@ public class ValueConvertor
 	public static Value convertWithCollectionsWithoutDefault(Object obj) 
 	{
 		 if (obj instanceof java.util.Map) {
-			return new Map((java.util.Map)obj);
+			return convertMap((java.util.Map)obj);
 		 } else if (obj instanceof Collection) {
 			return new Vector((Collection)obj);
 		 }
 		 return convertWithoutDefault(obj);
+	}
+	
+	public static Value convertMap(java.util.Map obj) {
+		Map m = new Map();
+		Iterator<java.util.Map.Entry> it = obj.entrySet().iterator();
+		while (it.hasNext()) {
+			java.util.Map.Entry e = it.next();
+			Object k = e.getKey();
+			Object v = e.getValue();
+			if (k instanceof String && v instanceof String && k.toString().equals("$$TYPE$$")) {					
+				switch (v.toString()) {
+					case "event" :
+						// skip
+						m.setForceResolvable(true);
+						continue;
+				}					
+			}
+			m.put(k,v);			
+		}
+		return m;
 	}
 	
 

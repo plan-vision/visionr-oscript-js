@@ -127,7 +127,12 @@ function fnd(odkey,pro) {
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectDefId$S', function(odkey) { return db.find(odkey).id; }, 1);
 	Clazz.newMeth(C$, 'getObjectDefById$J', function(id) { var odef = storage.defs.odById[id]; if (!odef) throw "bridge.js Can not find schema by id "+id; return odef.KEY; }, 1);
-	Clazz.newMeth(C$, 'getModuleId$S', function(module) { return storage.defs.modules[module].id; }, 1);
+	Clazz.newMeth(C$, 'getModuleId$S', function(module) {
+		var mod = storage.defs.modules[module];
+		if (!mod)
+			throw "bridge.js : can not get module id : "+module;
+		return mod.id; 
+	}, 1);
 	Clazz.newMeth(C$, 'hasModule$S', function(module) { return !!storage.defs.modules[module]; }, 1);
 	Clazz.newMeth(C$, 'moduleHasChild$S$S', function(module, odef) { return !!db.find(module+"."+odef); }, 1);
 	Clazz.newMeth(C$, 'getModules$', function() { return Object.keys(storage.defs.modules); }, 1);
@@ -140,29 +145,28 @@ function fnd(odkey,pro) {
 	Clazz.newMeth(C$, 'currentLang$', function() { return storage.defs.lang; }, 1);
 	Clazz.newMeth(C$, 'defaultLang$', function() { return storage.defs.defaultLang; }, 1);
 	Clazz.newMeth(C$, 'getObjectByCode$S$S', function (odkey, code) {
-		var od = db.find(odkey);
-		if (!od) {
-			switch (odkey) {
-				case "core.script" :
-				case "core.vscript" :
-				case "core.jscript" :
-					return server.ObjectWrapper.makeObject$S$J$S(odkey,-1,code); // force code 
-				default : 
-					throw "bridge.js : getObjectByCode$S$S : missing schema "+odkey;
-			}
+		switch (odkey) {
+			case "core.script" :
+			case "core.vscript" :
+			case "core.jscript" :
+				return server.ObjectWrapper.makeObject$S$J$S(odkey,-1,code); // force code
 		}
+		var od = db.find(odkey);
+		if (!od)  
+			throw "bridge.js : getObjectByCode$S$S : missing schema "+odkey;
 		var o = od.byCode(code);
 		if (!o) return;
 		return JS2JAVA(o); 
 	}, 1);
 	//-----------------------------------------------------------------------------------
+	var _idByCode;
 	Clazz.newMeth(C$, 'getModuleById$J', function(id) {
 		var mods = storage.defs.modules;
-		if (mods._idByCode) 
-			return mods._idByCode[id];
+		if (_idByCode) 
+			return _idByCode[id];
 		var t={};
 		for (var i in mods) t[mods[i].id]=i;
-		return (mods._idByCode=t)[id];
+		return (_idByCode=t)[id];
 	}, 1);
 	var _pdefproscache={};
 	Clazz.newMeth(C$, 'getObjectDefProperties$S', function(key) {
@@ -181,6 +185,12 @@ function fnd(odkey,pro) {
 		var t = db.find(odkey);
 		while (t.parentSchema) t=t.parentSchema;
 		return _topodcache[odkey]=t.KEY;
+	}, 1);
+	Clazz.newMeth(C$, 'getParentObjectDef$S', function(odkey) {
+		var t = db.find(odkey);
+		var p = t.parentSchema;
+		if (!p) return null;
+		return p.KEY;
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectDefProperyId$S$S', function(odkey, code) {
 		var od = db.find(odkey);if (!od) return;
@@ -212,7 +222,8 @@ function fnd(odkey,pro) {
 	Clazz.newMeth(C$, 'getObjectValuePos$S$J$S$I', function(odkey, id, pro,pos) {
 		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
 		if (!obj) return null;
-		var val = obj[pro];if (!(obj instanceof Array)) return null;
+		var val = obj[pro];
+		if (!(val instanceof Array)) return null;
 		return JS2JAVA(val[pos]);
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectI18nValue$S$J$S$S', function(odkey, id, pro, lang) {
@@ -269,12 +280,26 @@ function fnd(odkey,pro) {
 		}
 		return -1;
 	}, 1);
-	Clazz.newMeth(C$, 'SELECT$S$S$O', function(odkey,condition, params) {
+	Clazz.newMeth(C$, 'SELECT$S$S$O$S', function(odkey,condition, params,loadMode) {
 		params=JAVA2JS(params);
+		var select = undefined;
 		var groupBy = undefined;
 		var orderBy = undefined;
 		var limit = undefined;
 		var where = undefined;
+		if (loadMode && loadMode.startsWith("@")) {
+			var ll = loadMode.toUpperCase();
+			var i = ll.indexOf(" WHERE ");
+			if (i < 0) i = c.indexOf(" ORDER BY ");
+			if (i < 0) i = c.indexOf(" GROUP BY ");
+			if (i < 0) i = c.indexOf(" LIMIT ");
+			if (i >= 0) {
+				select=loadMode.substring(1,i).trim();
+				condition=loadMode.substring(i).trim();
+				if (condition.toUpperCase().startsWith("WHERE "))
+					condition=condition.substring(6);
+			}
+		}
 		if (condition) {
 			condition=" "+condition;
 			var c = condition.toUpperCase();
@@ -299,11 +324,17 @@ function fnd(odkey,pro) {
 			if (!where) where=undefined;
 		}
 		params=params||{};
-		params["where"]=where;
-		params["orderBy"]=orderBy;
-		params["groupBy"]=groupBy;
-		params["limit"]=limit;
-		var res = db.find(odkey).SELECT(params);
+		params.where=where;
+		params.orderBy=orderBy;
+		params.groupBy=groupBy;
+		params.limit=limit;
+		var od = db.find(odkey);
+		if (select) {
+			params.select=select;
+			res = od.DATA(params);
+		} else {
+			res = od.SELECT(params);			
+		}
 		return JS2JAVA(res);
 	}, 1);
 	//-----------------------------------------------------------------------------------
@@ -423,17 +454,19 @@ function fnd(odkey,pro) {
 		obj.delete();
 	}, 1);
 
-	Clazz.newMeth(C$, 'newObject$S$O', function(args) {
-		var od = db.find(odkey).byId(id);
+	Clazz.newMeth(C$, 'newObject$S$O', function(odkey,args) {
+		var od = db.find(odkey);
+		var obj = new od();
+		return JS2JAVA(obj);
 		// https://stackoverflow.com/questions/1606797/use-of-apply-with-new-operator-is-this-possible
-		function construct(constructor, args) {
+		/*function construct(constructor, args) {
 		    function F() {
 		        return constructor.apply(this, args);
 		    }
 		    F.prototype = constructor.prototype;
 		    return new F();
 		}		
-		return JS2JAVA(construct(od,JAVA2JS(args)));		
+		return JS2JAVA(construct(od,JAVA2JS(args)));*/		
 	}, 1);
 	
 	Clazz.newMeth(C$, 'deleteObjectValue$S$J$S', function(odkey, id, pro) {
@@ -455,8 +488,10 @@ function fnd(odkey,pro) {
 	}, 1);
 	Clazz.newMeth(C$, 'setObjectValue$S$J$S$O', function(odkey, id, pro, val) {
 		var obj = db.find(odkey).byId(id);
+		val=JAVA2JS(val);
 		JSCORE.transaction.objimporter.setValue(obj,pro,val);
 	}, 1);
+	
 	Clazz.newMeth(C$, 'setObjectValueRel$S$J$S$S$J', function(odkey, id, pro, valodkey, valid) {
 		var obj = db.find(odkey).byId(id);
 		var val = db.find(valodkey).byId(valid);
@@ -464,14 +499,24 @@ function fnd(odkey,pro) {
 	}, 1);
 	Clazz.newMeth(C$, 'setObjectValuePos$S$J$S$I$O', function(odkey, id, pro, pos, val) {
 		var obj = db.find(odkey).byId(id);
+		val=JAVA2JS(val);
 		JSCORE.transaction.objimporter.setValuePos(obj,pro,pos,val);
 	}, 1);
+	
+	Clazz.newMeth(C$, 'setObjectValuePosRel$S$J$S$I$S$J', function (odefkey, id, pro, pos, valodkey, valid) {
+		var obj = db.find(odkey).byId(id);
+		var val = db.find(valodkey).byId(valid);
+		JSCORE.transaction.objimporter.setValuePos(obj,pro,pos,val);
+	}, 1);
+	
 	Clazz.newMeth(C$, 'setObjectValueLang$S$J$S$S$S', function(odkey, id, pro, val, lang) {
 		var obj = db.find(odkey).byId(id);
+		val=JAVA2JS(val);
 		JSCORE.transaction.objimporter.setValueLang(obj,pro,lang,val);
 	}, 1);
 	Clazz.newMeth(C$, 'pushObjectValue$S$J$S$O', function(odkey, id, pro, val) {
 		var obj = db.find(odkey).byId(id);
+		val=JAVA2JS(val);
 		JSCORE.transaction.objimporter.pushObjectValue(obj,pro,val);
 	}, 1);
 	Clazz.newMeth(C$, 'pushObjectValueRel$S$J$S$S$J', function(odkey, id, pro, valodkey, valid) {
@@ -481,6 +526,59 @@ function fnd(odkey,pro) {
 	}, 1);
 	Clazz.newMeth(C$, 'isNestedTransaction$', function() {		
 		return JSCORE.transaction.hasSavePoint();
+	}, 1);
+
+	
+	Clazz.newMeth(C$, 'getObjectAccess$S$J$S', function (odk, id, mode) {
+		var od = db.find(odk);
+		var obj = od.byId(id);
+		return obj.ACCESS[mode];
+	}, 1);
+
+	Clazz.newMeth(C$, 'getSchemaAccess$S$S', function (odk, mode) {
+		var od = db.find(odk);
+		return od.ACCESS[mode];
+	}, 1);
+
+	//-------------------------------------------------------
+	// TODO PERSIST STORAGE ?
+	// TODO TEMP ONLY?
+	Clazz.newMeth(C$, 'getUserSetting$S', function (code) {
+		//console.log(">>>> GET USR SETTING "+code);
+		return JS2JAVA(undefined);
+	}, 1);	
+	Clazz.newMeth(C$, 'setUserSetting$S$O', function (code, value) {
+		value = JAVA2JS(value);
+		//console.log(">>>> SET USR SETTING "+code,value);
+	}, 1);
+	Clazz.newMeth(C$, 'setUserSettingRel$S$S$J', function (code, valod, valid) {
+		var value = db.find(valod).byId(valid);
+		//console.log(">>>> SET USR SETTING REL "+code,value);
+	}, 1);
+	Clazz.newMeth(C$, 'setLastValueInput$S$J$S$O', function (od, id, pro, def) {
+		var obj = db.find(od).byId(id);
+		//console.log(">>>> SET LAST VALUE INPUT "+obj+" | "+pro,def);
+	}, 1);
+	Clazz.newMeth(C$, 'setLastValueInputRel$S$J$S$S$J', function (od, id, pro, defod, defid) {
+		var obj = db.find(od).byId(id);
+		var value = db.find(defod).byId(defid);
+		//console.log(">>>> SET LAST VALUE INPUT REL "+obj+" | "+pro,value);
+	}, 1);
+
+	//-------------------------------------------------------
+	
+	Clazz.newMeth(C$, 'getLastValueInput$J$O', function (proid, def) {
+		//console.log(">>>> GET USR VALUE INPUT "+proid,def);
+	}, 1);
+
+	Clazz.newMeth(C$, 'getLastValueInputRel$J$S$J', function (proid, defod, defid) {
+		var def = db.find(valod).byId(valid);
+		//console.log(">>>> GET USR VALUE INPUT REF "+proid,def);
+	}, 1);
+
+	
+	Clazz.newMeth(C$, 'getMessage$S', function (code) {
+		return storage.defs.i18n[code] || code;
 	}, 1);
 	Clazz.newMeth(C$, 'getProgress$', function() {
 		debugger;
@@ -510,6 +608,7 @@ function fnd(odkey,pro) {
 							console.error(e.getMessage());
 						else
 							console.error(e.detailMessage || (e.val && e.val.str ? e.val.str : e));
+						console.warn("Executed script : ",body);
 					}
 				}
 		};
@@ -518,6 +617,11 @@ function fnd(odkey,pro) {
 		window.Error = Clazz._Error; // undo swingjs override 
 	}, 1);
 	Clazz.newMeth(C$);
+
+	Clazz.newMeth(C$, 'beforeException$', function () {
+		//debugger;
+	}, 1);
+
 })();
 ;
 Clazz.setTVer('3.2.4.07');// Created 2019-06-05 12:10:16 Java2ScriptVisitor

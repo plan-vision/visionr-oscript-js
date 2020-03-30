@@ -76,9 +76,10 @@ public class OException extends OObject
   // called from StackFrame#evalNode
   public final void preserveStackFrame()
   {
-    if( line != sf.getLineNumber() )
-      sf.setLineNumber(line);
-    sf = sf.getSafeCopy();
+	if (sf != null ) {
+	    if( line != sf.getLineNumber() ) sf.setLineNumber(line);
+	    sf = sf.getSafeCopy();
+	}
   }
   
   /*=======================================================================*/

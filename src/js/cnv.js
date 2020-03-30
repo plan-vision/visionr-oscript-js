@@ -8,7 +8,6 @@ var makeObjectDef = function(shkey) {
 	return server.ObjectWrapper.makeObjectDef$S$Z(shkey,false);
 };
 var makeProperty = function(shkey,code) {
-	debugger;
 	return server.ObjectWrapper.makeProperty$S$S(shkey,code);
 };
 //---------------------------------------------------------
@@ -16,7 +15,10 @@ function JS2JAVA(val)
 {
 	if (val instanceof Function) {
 		// schema only support
-		if (!val.KEY) throw "cnv : JS2JAVA unsupported type "+val;
+		if (!val.KEY) {
+			debugger;
+			throw "cnv : JS2JAVA unsupported type "+val;
+		}
 		return makeObjectDef(val.KEY);
 	} else if (val instanceof db) {		
 		return makeObject(val.SCHEMA.KEY,val.id);
@@ -27,8 +29,8 @@ function JS2JAVA(val)
 	} else if (val instanceof Date) {
 		return new java.util.Date(val.getTime());
 	} else if (val instanceof Object) {
-		if (val._type == "PRO" && val.code && val.schema) // todo check exact ref storage.defs.properties
-			return makeProperty(val.schema,val.code)
+		if (val._type == "PRO" && val.code && val._schema) // todo check exact ref storage.defs.properties
+			return makeProperty(val._schema,val.code)
 		var t = new java.util.HashMap()
 		for (var i in val) t.put$TK$TV(i,JS2JAVA(val[i]));
 		return t;
@@ -65,16 +67,16 @@ function JAVA2JS(val) {
 		var it  = val.keySet$().iterator$();
 		while (it.hasNext$()) {
 			var k = it.next$().toString();
-			var v = JAVA2JS(t.get$O(k));
+			var v = JAVA2JS(val.get$O(k));
 			a[k]=v;
 		}
 		return a;
 	} else if (Clazz.instanceOf(val, "java.util.Date")) {
 		return new Date(val.getTime());
 	} else if (Clazz.instanceOf(val, "java.lang.Double")) {
-		return val.doubleValue();		
+		return val.doubleValue$();		
 	} else if (Clazz.instanceOf(val, "java.lang.Number")) {
-		return val.longValue();
+		return val.longValue$();
 	} else if (Clazz.instanceOf(val, "java.lang.String")) {
 		return val.toString();
 	} else if (Clazz.instanceOf(val, "java.lang.Boolean")) {

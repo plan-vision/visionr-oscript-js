@@ -45,7 +45,10 @@ public class bridge
 		return null;
 	}
 	public static String getTopObjectDef(String odkey) {
-		return odkey;
+		return null;
+	}
+	public static String getParentObjectDef(String odkey) { 
+		return null;
 	}
 	// odkeay allInherits.contains(key)
 	public static boolean objectDefAllInheritsContains(String odkey,String key) {
@@ -94,7 +97,7 @@ public class bridge
 	public static Object getObjectByCode(String odefkey,String code) {
 		return null;
 	} 
-	public static String[] SELECT(String odkey,String condition,Object params)  {
+	public static String[] SELECT(String odkey,String condition,Object params,String loadMode)  {
 		return null;
 	}
 	public static boolean isDeleted(String odkey,long id) {
@@ -123,6 +126,9 @@ public class bridge
 	}
 	public static boolean isI18n(String odkey,String pro) {
 		return false;
+	}
+	public static String getMessage(String code) {
+		return null; 
 	}
 	public static String currentLang() {return null;}
 	public static String defaultLang() {return null;}
@@ -168,6 +174,9 @@ public class bridge
 	public static void setObjectValuePos(String odefkey,long id,String pro,int pos,Object val) {
 		// by pos
 	}
+	public static void setObjectValuePosRel(String odefkey,long id,String pro,int pos,String valodkey,long valid) { 
+		// by pos
+	}
 	public static void setObjectValueLang(String odefkey,long id,String pro,String val,String lang) {
 		// by lang
 	}
@@ -177,6 +186,23 @@ public class bridge
 	public static void pushObjectValueRel(String odefkey,long id,String pro,String valodkey,long valid) {
 		// MULTIPLE ONLY 
 	}
+	public static void setUserSetting(String code,Object value) {}
+	public static void setUserSettingRel(String code,String valod,long valid) {}
+	public static Object getUserSetting(String code) {return null;}
+	
+
+	public static void setLastValueInput(String od,long id,String pro,Object value) {}
+	public static void setLastValueInputRel(String od,long id,String pro,String valod,long valid) {} 
+	public static Object getLastValueInput(long proid,Object def) {return null;}
+	public static Object getLastValueInputRel(long proid,String defod,long defid) {return null;} 
+		
+	public static boolean getObjectAccess(String odk,long id,String mode) {
+		return false;
+	}
+	public static boolean getSchemaAccess(String odk,String mode) {
+		return false;
+	}
+	 
 	public static boolean isNestedTransaction() {
 		return false;
 	}
@@ -187,12 +213,15 @@ public class bridge
 	}
 	
 	public static Value getUser() { return null; } 
+	public static void beforeException() { 
+ 		
+	} 
 	//---------------------------------------------------------------
 	static HashMap<String,Value> _evals=new HashMap();
 	public static void boostrap() {
 		System.out.println(">>> VSC JS BOOT <<<");
 		OscriptInterpreter.getGlobalScope().createMember("__eval",0);
-	}
+ 	}
 }
 
 

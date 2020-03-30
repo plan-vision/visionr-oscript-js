@@ -35,6 +35,7 @@ files.push("java/util/Calendar");
 files.push("java/util/TimeZone");
 files.push("sun/util/calendar/ZoneInfo");
 files.push("sun/util/resources/LocaleData");
+files.push("java/lang/reflect/Array");
 files.push("java/util/ResourceBundle");
 files.push("java/io/ByteArrayInputStream");
 files.push("java/io/InputStream");

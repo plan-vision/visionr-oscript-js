@@ -15,11 +15,14 @@ import oscript.util.StackFrame;
 import oscript.varray.Map;
 import oscript.varray.Vector;
 import server.DBWrapper;
+import server.ODateTimeValue;
 import server.ObjectWrapper;
 import server.SessionWrapper;
 import server.SystemWrapper;
 import server.ValueConvertor;
 import server.ValueWrapper;
+
+import java.util.Date;
 
 //import java.text.DecimalFormat;
 //import java.text.DecimalFormatSymbols;
@@ -53,17 +56,12 @@ public class base {
 			@Override
 			protected Value getTypeImpl() {
 				return null;
-			}
-			@Override
-			public Value elementAt(Value idx) throws PackagedScriptObjectException {
-				Object t = bridge.getObjectByCode("core.script",idx.castToString());
-				if (t == null) return Value.NULL;
-				ObjectWrapper w = (ObjectWrapper)t;
-				Value v = w.getMember("name");
-				if (v.bopEquals(Value.NULL).castToBoolean())
-					return new OString(w.code());
-				return v.unhand();				
-			}		
+			} 
+			
+			public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+				String code = args.referenceAt(0).castToString();
+				return new OString(bridge.getMessage(code));				
+			}			
 		});
 
 		s.createMember("db", Reference.ATTR_PUBLIC);
@@ -164,7 +162,50 @@ public class base {
 						}
 						@Override
 						public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
-							switch (Symbol.getSymbol(id).castToString()) {
+							String s = Symbol.getSymbol(id).castToString();
+							switch (s) {
+								case "setLastValueInput" :
+									return new Value() {
+										@Override
+										public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+											ObjectWrapper obj = (ObjectWrapper)(args.referenceAt(0).unhand());
+											String pro  = args.referenceAt(1).unhand().castToString();
+											Object val = ValueConvertor.convertToJavaObject(args.referenceAt(2).unhand());
+											if (val instanceof ObjectWrapper) {
+												ObjectWrapper o = (ObjectWrapper)val;
+												bridge.setLastValueInputRel(obj.getOD(),obj.getID(),pro,o.getOD(),o.getID());
+											} else {
+												bridge.setLastValueInput(obj.getOD(),obj.getID(),pro,val);
+											} 
+											return Value.NULL;
+										}
+
+										@Override
+										protected Value getTypeImpl() {
+											return null;
+										}
+									};
+								case "getLastValueInput" : 
+									return new Value() {
+										@Override
+										public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+											ObjectWrapper pro  = (ObjectWrapper)(args.referenceAt(0).unhand());
+											Object defval = ValueConvertor.convertToJavaObject(args.referenceAt(1).unhand());
+											if (defval instanceof ObjectWrapper) {
+												return ValueConvertor.convert(bridge.getLastValueInput(pro.getID(),defval));
+											} else {
+												ObjectWrapper o = (ObjectWrapper)defval;
+												return ValueConvertor.convert(bridge.getLastValueInputRel(pro.getID(),o.getOD(),o.getID()));
+											}
+										}
+
+										@Override
+										protected Value getTypeImpl() {
+											return null;
+										}
+									};
+									
+									
 								case "historizeDeletedObject" : 
 								case "historizeValue" :
 									return new Value() {
@@ -180,6 +221,30 @@ public class base {
 										}
 									};
 							}
+							System.err.println(" >> access missing member of core.misc package "+s);
+							return super.getMember(id,exception);
+						}			
+					};
+					case "data_exchange" : return new Value() {
+						@Override
+						protected Value getTypeImpl() {
+							return null;
+						}
+						@Override
+						public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+							switch (Symbol.getSymbol(id).castToString()) {
+								case "getOfflinePrefix" : 
+									return new Value() {
+										@Override
+										public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+											return new OString("OFFL"); // TODO ASSIGN OFFLINE ID AT CHECKOUT 
+										}
+										@Override
+										protected Value getTypeImpl() {
+											return null;
+										}
+									};
+							}
 							return super.getMember(id,exception);
 						}			
 					};
@@ -187,6 +252,49 @@ public class base {
 				return super.getMember(id,exception);
 			}			
 		});
+/*
+		s.createMember("web", Reference.ATTR_PUBLIC);
+		s.getMember("web").opAssign(new Value() {
+
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}
+			@Override
+			public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+				switch (Symbol.getSymbol(id).castToString()) 
+				{
+					case "misc" : return new Value() {
+						@Override
+						protected Value getTypeImpl() {
+							return null;
+						}
+						@Override
+						public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+							String s = Symbol.getSymbol(id).castToString();
+							switch (s) {
+								case "checkDeleteDependenciesJS" :
+									return new Value() {
+										@Override
+										public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+											// TODO ?
+											return Value.NULL;
+										}
+
+										@Override
+										protected Value getTypeImpl() {
+											return null;
+										}
+									};								
+							}
+							System.err.println(" >> access missing member of web.misc package "+s);
+							return super.getMember(id,exception);
+						}			
+					};
+				} 
+				return super.getMember(id,exception);
+			}			
+		});*/
 
 		s.createMember("java", Reference.ATTR_PUBLIC);
 		s.getMember("java").opAssign(new Value() {		
@@ -213,6 +321,42 @@ public class base {
 								return super.getMember(id, exception);
 							}
 						};
+					case "date" :
+						return new Value() {
+							@Override
+							protected Value getTypeImpl() {return null;}
+							public Value getMember(int id, boolean exception) throws PackagedScriptObjectException {
+								switch (Symbol.getSymbol(id).castToString()) 
+								{
+									case "now" :
+										return new Value() {
+											@Override
+											public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException { 
+												return new ODateTimeValue(new Date());
+											}
+											@Override
+											protected Value getTypeImpl() {return null;}
+										};
+									case "today" :
+										return new Value() {
+											@Override
+											public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException { 
+												ODateTimeValue res =  new ODateTimeValue(new Date());
+												res.setHours(0);
+												res.setMinutes(0);
+												res.setSeconds(0);
+												res.setMillis(0);
+												res.setNanos(0);
+												return res;
+											}
+											@Override
+											protected Value getTypeImpl() {return null;}
+										};										
+								}
+								return super.getMember(id, exception);
+							}
+						};
+
 					case "string" :
 						return new Value() {
 							@Override
@@ -382,6 +526,23 @@ public class base {
 				return null;
 			}			
 		});
+		for (int i=0;i<16;i++) {
+			final int fi = i;
+			s.createMember("FORMAT_DOUBLE_"+i,Reference.ATTR_PUBLIC).opAssign(new Value() {
+				@Override
+				public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+					Object a[] = new Object[2];
+					a[0]=args.referenceAt(0).castToInexactNumber();
+					a[1]=fi;
+					return new OString(bridge.require("server/misc","formatDoubleDigits",a).toString());
+				}
+				@Override
+				protected Value getTypeImpl() {
+					return null;
+				}			
+			});			
+		}
+
 		s.createMember("FORMAT_DATETIME",Reference.ATTR_PUBLIC).opAssign(new Value() {
 			@Override
 			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {

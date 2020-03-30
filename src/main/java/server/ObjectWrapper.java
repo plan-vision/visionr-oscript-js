@@ -99,6 +99,8 @@ public final class ObjectWrapper extends Value implements Comparable
 	public String code() {
 		if (forceCode != null)
 			return forceCode;
+		if (type == TYPE_OBJECTDEF) 
+			return this.odkey.substring(this.odkey.indexOf(".")+1);
 		String code = (String)bridge.getObjectValue(_objSchema, _objId, "code");
 		if (code == null) return "";
 		return code;
@@ -123,7 +125,6 @@ public final class ObjectWrapper extends Value implements Comparable
 		// TODO Auto-generated catch bloc
 		OArray a = new OArray(args);
 		return bridge.newObject(odkey,a);
-		throw new RuntimeException("Error importing object : NOT IMPLEMENTED!");
 	}
 
 	public String toString() {
@@ -210,10 +211,18 @@ public final class ObjectWrapper extends Value implements Comparable
 						return Value.NULL; 
 				}
 			} else if (type == TYPE_OBJECTDEF) {
+				if (code.equals("code")) {
+					int k = odkey.indexOf(".");
+					return new OString(odkey.substring(k+1));
+				}
 				if (bridge.objectDefHasPropery(odkey, code))
 					return this.elementAt(new OString(code));
 			}
 		} else if (type == TYPE_OBJECTDEF) {
+			if (code.equals("code")) {
+				int k = odkey.indexOf(".");
+				return new OString(odkey.substring(k+1));
+			}
 			// NOT IMPL
 		} else {
 			if (bridge.objectDefHasPropery(odkey, code)) {
@@ -236,10 +245,10 @@ public final class ObjectWrapper extends Value implements Comparable
 						}
 					};
 				}
-				p=code;
+				p=code; 
 			} else {
-				if (symbol == Symbols.IS_EMPTY)	// hack for db.currentSession().user.is_empty
-					return new OBoolean(false);
+				if (code.equals("is_temporary") || symbol == Symbols.IS_EMPTY)	// hack for db.currentSession().user.is_empty
+					return new OBoolean(false);				
 			}
 		}
 		if (p == null)
@@ -459,7 +468,29 @@ public final class ObjectWrapper extends Value implements Comparable
 	
 	private Value _resolveObjectDef(int symbol) {
 		switch (symbol) {
-
+			case Symbols.KEY_TYPE :
+				return new OString(this.odkey);
+			case Symbols.PARENT_OBJECTDEF :
+				String pk = bridge.getParentObjectDef(this.odkey);
+				if (pk == null) return Value.NULL;
+				return makeObjectDef(pk,true);
+			case Symbols.OBJECT_ACCESS_TYPE : 
+			{
+				return new Value() {
+					@Override
+					protected Value getTypeImpl() {
+						return this;
+					}
+					@Override
+					public Value getMember(int id, boolean exception) {
+						String s = Symbol.getSymbol(id).castToString();
+						if (s.startsWith("is_"))
+							return new OBoolean(bridge.getSchemaAccess(odkey,s.substring(3)));
+						return super.getMember(id,exception);
+					}
+				};
+			}
+	
 			case Symbols.CLEAR_GLOBAL_CACHE : 
 				return new Value() {
 					@Override
@@ -588,12 +619,41 @@ public final class ObjectWrapper extends Value implements Comparable
 	private Value _resolveObject(int symbol) {
 		switch (symbol)
 		{
+			case Symbols.OBJECT_ACCESS_TYPE : 
+			{
+				return new Value() {
+					@Override
+					protected Value getTypeImpl() {
+						return this;
+					}
+					@Override
+					public Value getMember(int id, boolean exception) {
+						String s = Symbol.getSymbol(id).castToString();
+						if (s.startsWith("is_"))
+							return new OBoolean(bridge.getObjectAccess(getOD(),getID(),s.substring(3)));
+						return super.getMember(id,exception);
+					}
+				};
+			}
+
+			case Symbols.REFRESH_OBJECT_TYPE :
+			{
+			  return new Value() {
+				  public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) {
+					  return Value.NULL;
+				 }
+				@Override
+				protected Value getTypeImpl() { 
+					return this;
+				}
+			  };
+			}
 			case Symbols.DELETE :
 			{
 			  return new Value() {
 				  public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) {
 					  delete();
-					  return null;
+					  return Value.NULL;
 				 }
 				@Override
 				protected Value getTypeImpl() {
@@ -665,6 +725,46 @@ public final class ObjectWrapper extends Value implements Comparable
 					}
 				};
 			}
+		}
+		//-------------------------------------------------------
+		switch (_objSchema) 
+		{
+			case "core.user" : 
+			case "contacts.user" : 
+			case "contacts.user_registered" :
+				switch (Symbol.getSymbol(symbol).castToString()) {
+					case "get_setting_value" : 
+			  			return new Value() 
+						{
+							public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) {
+								String code = args.referenceAt(0).castToString();
+								return ValueConvertor.convert(bridge.getUserSetting(code));
+							}
+							protected Value getTypeImpl() {
+								return this;
+							}
+						};
+						
+					case "set_setting" : 
+			  			return new Value() 
+						{
+							public Value callAsFunction(StackFrame sf,oscript.util.MemberTable args) {
+								TempValueWrapper.clearForObject(_objSchema, _objId);
+								String code = args.referenceAt(0).castToString();
+								Object val = ValueConvertor.convertToJavaObject(args.referenceAt(1).unhand());
+								if (val instanceof ObjectWrapper) {
+									ObjectWrapper o = (ObjectWrapper)val;
+									bridge.setUserSettingRel(code,o.getOD(),o.getID());
+								} else
+									bridge.setUserSetting(code,val);
+								return Value.NULL;
+							}
+							protected Value getTypeImpl() {
+								return this;
+							}
+						};
+				}
+				break;
 		}
 		return null;
 	}
