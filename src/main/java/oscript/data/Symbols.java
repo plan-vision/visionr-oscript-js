@@ -447,6 +447,7 @@ public class Symbols {
 	public static final int IS_NESTED_TRANSACTION = 436;
 	
 	public static final int APPEND = 437;
+	public static final int IS_LOCAL = 438;
 	
 	
 	public static final Symbol _USER_SESSION= Symbol.getSymbol("user_session");
@@ -902,6 +903,7 @@ public class Symbols {
 		Symbol.setSymbol(IS_FORMS,"is_forms");
 		Symbol.setSymbol(IS_NESTED_TRANSACTION,"is_nested_transaction");
 		Symbol.setSymbol(APPEND,"append");
+		Symbol.setSymbol(IS_LOCAL,"is_local");
 	}
 }
 

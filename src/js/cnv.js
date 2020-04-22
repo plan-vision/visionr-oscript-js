@@ -29,6 +29,8 @@ function JS2JAVA(val)
 	} else if (val instanceof Date) {
 		return new java.util.Date(val.getTime());
 	} else if (val instanceof Object) {
+		if (val._type == "WRP")
+			return val;
 		if (val._type == "PRO" && val.code && val._schema) // todo check exact ref storage.defs.properties
 			return makeProperty(val._schema,val.code)
 		var t = new java.util.HashMap()

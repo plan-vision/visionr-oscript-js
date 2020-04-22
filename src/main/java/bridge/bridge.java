@@ -145,6 +145,8 @@ public class bridge
 		return -1;
 	}
 	//---------------------------
+	public static void commitObject(String odefkey,long id) {
+	}
 	public static void deleteObject(String odefkey,long id) {
 	}
 	

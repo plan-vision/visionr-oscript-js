@@ -381,15 +381,16 @@ function fnd(odkey,pro) {
 		var val = obj.OLD._v(pro);if (!val) return null;		
 		return JS2JAVA(Object.keys(val));
 	}, 1);
-	
-	
+		
 	Clazz.newMeth(C$, 'getObjectOldValue$S$J$S', function(odkey, id, pro) {
-		var obj = od.get(id);
+		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		if (!obj) return null;
 		var val = JS2JAVA(obj.OLD[pro]);
 		return val;
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectOldValueCount$S$J$S',function(odkey, id, pro) {
 		var obj = storage.ocache.ensureObjectsReady(odkey).get(id);
+		if (!obj) return null;
 		return obj.OLD.count(pro);
 	}, 1);
 	
@@ -449,6 +450,10 @@ function fnd(odkey,pro) {
 		return JS2JAVA(src.fnc.apply(JAVA2JS(that),JAVA2JS(args))); // NO SUPER
 	}, 1);	
 
+	Clazz.newMeth(C$, 'commitObject$S$J', function(odkey, id) {
+		var obj = db.find(odkey).byId(id);
+		obj.commit();
+	}, 1);
 	Clazz.newMeth(C$, 'deleteObject$S$J', function(odkey, id) {
 		var obj = db.find(odkey).byId(id);
 		obj.delete();
@@ -599,10 +604,11 @@ function fnd(odkey,pro) {
 		window.VSCRIPT={			
 				JAVA2JS : JAVA2JS,
 				JS2JAVA : JS2JAVA,
-				call : function(key,body,args,that) {
+				call : function(key,body,args,that,_super) {
+					//console.log(">>> CALL "+key+" > ",args);
 					try {
 						if (typeof body == "function") body=body();
-						return JAVA2JS(bridge.base.callVScriptFunction$O$O$OA$O$O(key,body,JS2JAVA(args),JS2JAVA(that),JS2JAVA()));
+						return JAVA2JS(bridge.base.callVScriptFunction$O$O$OA$O$O(key,body,JS2JAVA(args),JS2JAVA(that),JS2JAVA(_super)));
 					} catch(e) {
 						if (typeof e.getMessage == "function")
 							console.error(e.getMessage());

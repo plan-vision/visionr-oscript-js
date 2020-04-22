@@ -32,6 +32,11 @@ public class ValueConvertor
 			 return convertMap((java.util.Map)obj);
 		 } else if (obj instanceof Collection) {
 			return new Vector((Collection)obj);
+		 } else if (obj instanceof Object[]) {
+			 Vector r = new Vector();
+			 for (Object o : ((Object[])obj))
+				 r.put(o);
+			 return r;
 		 }
 		 return convert(obj);
 	}

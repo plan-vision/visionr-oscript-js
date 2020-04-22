@@ -53,8 +53,9 @@ public class SessionWrapper extends Value
 			};
 		} else if (id == Symbols.IS_FORMS) {
 			return OBoolean.TRUE;
-		}
-		
+		} else if (id == Symbols.IS_LOCAL) {
+			return OBoolean.TRUE;
+		}		
 				
 		if( id == Symbols.LOGGED_IN) {
 			return new OBoolean( true ) {

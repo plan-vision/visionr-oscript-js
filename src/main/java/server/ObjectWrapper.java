@@ -174,18 +174,7 @@ public final class ObjectWrapper extends Value implements Comparable
 	}
 		
 	public void commit() {
-		/*DBObject obj=getDBObject();
-		VRSessionContext ct = obj.getContext();
-		try {
-			if (obj.isTransactionObject())
-				obj.getContext().getGlobalTransaction().commitObject((DBCachedObject)obj);
-			else if (obj.isEventObject(ct))
-				obj.getContext().getConTransaction().commitObject((DBCachedObject)obj);
-		} catch (VException e) {
-			throw new RuntimeException("On commiting data: " + e.getMessage(), e);
-		} */
-		// TODO
-		throw new RuntimeException("ObjectWrapper.commit() : TODO!");
+		bridge.commitObject(_objSchema,_objId);
 	}
 	
 	public String castToString() {
@@ -783,12 +772,24 @@ public final class ObjectWrapper extends Value implements Comparable
 	 }
 
 	
-	private HashMap<String,ValueWrapper> vwrps = new HashMap();
+	private HashMap<String,ValueWrapper> vwrps;
+	private HashMap<String,ValueWrapper> vwrpsOld;
 	public ValueWrapper getValueWrapper(int context,String pro,String lang,int pos,boolean oldMode) 
 	{
 		final boolean isCached = (context == 1);
 		if (isCached) {
-			ValueWrapper valw = vwrps.get(pro);
+			ValueWrapper valw = null;
+			if (oldMode) {
+				if (vwrpsOld == null) 
+					vwrpsOld=new HashMap();
+				else
+					valw=vwrpsOld.get(pro);
+			} else {
+				if (vwrps== null) 
+					vwrps=new HashMap();
+				else
+					valw=vwrps.get(pro);
+			}
 			if (valw != null)
 				return valw;
 		}
@@ -800,8 +801,12 @@ public final class ObjectWrapper extends Value implements Comparable
 		b.pos=pos;
 		b.oldMode=oldMode;
 		ValueWrapper res=new ValueWrapper(b,this);
-		if (isCached)
-			vwrps.put(pro, res);
+		if (isCached) {
+			if (oldMode)
+				vwrpsOld.put(pro, res);
+			else
+				vwrps.put(pro, res);
+		}
 		return res;
 	}
 

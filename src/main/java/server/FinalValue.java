@@ -32,8 +32,10 @@ public class FinalValue extends ValueWrapperTempReference {
 	
 	public FinalValue(Object val,String lang,Integer pos,ValueWrapper wr) {
 		super();	
-
-		this.oval=ValueConvertor.convert(val);		
+		if (pos == null && lang == null && wr.proIsMultiple()) {
+			this.oval=ValueConvertor.convertWithCollections(val);
+		} else
+			this.oval=ValueConvertor.convert(val);		
 		if (wr != null && this.oval instanceof ODateTimeValue) {
 			this.oval = ((ODateTimeValue)oval).getValueWrapperCopy(wr);			
 		} else if (oval == null) {
