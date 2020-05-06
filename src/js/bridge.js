@@ -84,7 +84,8 @@ function fnd(odkey,pro) {
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectValue$S$J$S', function(odkey, id, pro) {
 		var od = storage.ocache.ensureObjectsReady(odkey);
-		if (!od)  {
+		var obj;
+		if (!od || !(obj=od.get(id)))  {
 			switch (odkey) {
 				case "core.property" :
 					var p = storage.defs.proById[id];
@@ -98,9 +99,8 @@ function fnd(odkey,pro) {
 					}
 					break;
 			}
-			throw "bridge.getObjectValue$S$J$S : can not find schema "+odkey;
+			throw "bridge.getObjectValue$S$J$S : can not find object in cache "+odkey+" : "+id;
 		}
-		var obj = od.get(id);
 		var val = JS2JAVA(obj[pro]);return val;
 	}, 1);
 	
@@ -193,9 +193,10 @@ function fnd(odkey,pro) {
 		return p.KEY;
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectDefProperyId$S$S', function(odkey, code) {
-		var od = db.find(odkey);if (!od) return;
+		var od = db.find(odkey);
+		if (!od) throw "bridge.getObjectDefProperyId$S$S : can not find schema "+odkey;
 		var pro = od.getProperty(code);
-		if (!pro) return;
+		if (!pro) throw "bridge.getObjectDefProperyId$S$S : can not find property "+odkey+"."+code;
 		return pro.meta.id;
 	}, 1);
 	var _odinhcache={};
@@ -228,7 +229,8 @@ function fnd(odkey,pro) {
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectI18nValue$S$J$S$S', function(odkey, id, pro, lang) {
 		var cache = storage.ocache.ensureObjectsReady(odkey);
-		if (!cache) {
+		var obj;
+		if (!cache || !(obj=cache.get(id))) {
 			switch (odkey) {
 				case "core.property" : {
 					switch (pro) {
@@ -239,10 +241,8 @@ function fnd(odkey,pro) {
 				}
 				break
 			}
-			throw "bridge.getObjectI18nValue$S$J$S$S : can not find schema "+odkey;
+			throw "bridge.getObjectI18nValue$S$J$S$S : can not find object in cache "+odkey+" : "+id;
 		} 
-		var obj = cache.get(id);
-		if (!obj) return null;
 		var val = obj._v(pro);if (!val) return null;		
 		return JS2JAVA(val[lang]);
 	}, 1);
@@ -357,7 +357,8 @@ function fnd(odkey,pro) {
 	}, 1);
 	Clazz.newMeth(C$, 'getObjectOldI18nValue$S$J$S$S', function(odkey, id,pro, lang) {
 		var cache = storage.ocache.ensureObjectsReady(odkey);
-		if (!cache) {
+		var obj;
+		if (!cache || !(obj=cache.get(id))) {
 			switch (odkey) {
 				case "core.property" : {
 					switch (pro) {
@@ -368,10 +369,8 @@ function fnd(odkey,pro) {
 				}
 				break
 			}
-			throw "bridge.getObjectI18nValue$S$J$S$S : can not find schema "+odkey;
+			throw "bridge.getObjectI18nValue$S$J$S$S : can not find object in cache "+odkey+" : "+id;
 		} 
-		var obj = cache.get(id);
-		if (!obj) return null;
 		var val = obj.OLD._v(pro);if (!val) return null;		
 		return JS2JAVA(val[lang]);
 	}, 1);
@@ -619,7 +618,6 @@ function fnd(odkey,pro) {
 				}
 		};
 		//window.VSCRIPT.call("test","function(){ return 1+2;}",[])
-		System.out.println$S(">>> VSC JS BOOT <<<");
 		window.Error = Clazz._Error; // undo swingjs override 
 	}, 1);
 	Clazz.newMeth(C$);

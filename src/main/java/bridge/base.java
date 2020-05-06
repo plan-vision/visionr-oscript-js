@@ -220,6 +220,22 @@ public class base {
 											return null;
 										}
 									};
+								case "copyObjectExcludeAdv" :
+									return new Value() {
+										@Override
+										public Value callAsFunction(StackFrame sf, MemberTable args) throws PackagedScriptObjectException {
+											// arguments : object,excludes
+											Object[] a = new Object[2];
+											a[0]=args.referenceAt(0).unhand();
+											a[1]=args.referenceAt(1).unhand();
+											return ValueConvertor.convert(bridge.require("server/forms/local","copyObject",a));
+										}
+
+										@Override
+										protected Value getTypeImpl() {
+											return null;
+										}
+									};
 							}
 							System.err.println(" >> access missing member of core.misc package "+s);
 							return super.getMember(id,exception);

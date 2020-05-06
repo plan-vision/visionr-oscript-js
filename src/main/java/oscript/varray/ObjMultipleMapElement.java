@@ -31,8 +31,11 @@ public class ObjMultipleMapElement<KeyType,ValueType> implements MultiMapElement
 			int r=key.getClass().hashCode()-o.key.getClass().hashCode();
 			if (r != 0)
 				return r;
-			
-			if (key instanceof Comparable) {
+			if (key instanceof Boolean) {
+				Boolean b1 = (Boolean)key;
+				Boolean b2 = (Boolean)o.key;
+				r=b1.compareTo(b2);
+			} else if (key instanceof Comparable) {
 				if (key instanceof Number && o.key instanceof Number) 
 				{
 					if (key instanceof Long || key instanceof Integer) {
@@ -54,6 +57,7 @@ public class ObjMultipleMapElement<KeyType,ValueType> implements MultiMapElement
 					r=((Comparable)key).compareTo(o.key);
 			} else
 			  r = key.hashCode()-o.key.hashCode();
+			
 			if (r < 0)
 				return -1;
 			if (r > 0)
@@ -80,9 +84,11 @@ public class ObjMultipleMapElement<KeyType,ValueType> implements MultiMapElement
 			r=val.getClass().hashCode()-o.val.getClass().hashCode();
 			if (r != 0)
 				return r;
-			
-			if (val instanceof Comparable) 
-			{
+			if (val instanceof Boolean) {
+				Boolean b1 = (Boolean)val;
+				Boolean b2 = (Boolean)o.val;
+				r=b1.compareTo(b2);
+			} else if (val instanceof Comparable) {
 				if (val instanceof Number && o.val instanceof Number) 
 				{
 					if (val instanceof Long || val instanceof Integer) 

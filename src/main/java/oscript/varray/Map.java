@@ -962,7 +962,7 @@ public class Map extends Value {
 												r=0;
 										}
 									}
-										else r =((Comparable)key).compareTo(o.key);
+									else r=((Comparable)key).compareTo(o.key);
 								}
 								if (r != 0)
 									return r;
