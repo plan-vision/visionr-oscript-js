@@ -625,6 +625,100 @@ public class base {
 				return null;
 			}			
 		});
+
+		s.createMember("ROUND0",Reference.ATTR_PUBLIC).opAssign(new Value() {
+			@Override
+			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+				Value v = args.referenceAt(0).unhand();
+				if (v instanceof OExactNumber) return v;
+				double n = v.castToInexactNumber();
+				return new oscript.data.OInexactNumber(java.lang.Math.round(n));
+			}
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}			
+		});
+		s.createMember("ROUND0",Reference.ATTR_PUBLIC).opAssign(new Value() {
+			@Override
+			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+				Value v = args.referenceAt(0).unhand();
+				if (v instanceof OExactNumber) return v;
+				double n = v.castToInexactNumber();
+				return new oscript.data.OInexactNumber(java.lang.Math.round(n));
+			}
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}			
+		});
+		s.createMember("ROUND1",Reference.ATTR_PUBLIC).opAssign(new Value() {
+			@Override
+			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+				Value v = args.referenceAt(0).unhand();
+				if (v instanceof OExactNumber) return v;
+				double n = v.castToInexactNumber();
+				return new oscript.data.OInexactNumber(java.lang.Math.round(n*10)/10.0);
+			}
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}			
+		});
+		s.createMember("ROUND2",Reference.ATTR_PUBLIC).opAssign(new Value() {
+			@Override
+			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+				Value v = args.referenceAt(0).unhand();
+				if (v instanceof OExactNumber) return v;
+				double n = v.castToInexactNumber();
+				return new oscript.data.OInexactNumber(java.lang.Math.round(n*100)/100.0);
+			}
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}			
+		});
+		s.createMember("ROUND3",Reference.ATTR_PUBLIC).opAssign(new Value() {
+			@Override
+			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+				Value v = args.referenceAt(0).unhand();
+				if (v instanceof OExactNumber) return v;
+				double n = v.castToInexactNumber();
+				return new oscript.data.OInexactNumber(java.lang.Math.round(n*1000)/1000.0);
+			}
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}			
+		});
+		s.createMember("ROUND4",Reference.ATTR_PUBLIC).opAssign(new Value() {
+			@Override
+			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+				Value v = args.referenceAt(0).unhand();
+				if (v instanceof OExactNumber) return v;
+				double n = v.castToInexactNumber();
+				return new oscript.data.OInexactNumber(java.lang.Math.round(n*10000)/10000.0);
+			}
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}			
+		});
+		s.createMember("ROUND5",Reference.ATTR_PUBLIC).opAssign(new Value() {
+			@Override
+			public Value callAsFunction( StackFrame sf, MemberTable args ) throws PackagedScriptObjectException {
+				Value v = args.referenceAt(0).unhand();
+				if (v instanceof OExactNumber) return v;
+				double n = v.castToInexactNumber();
+				return new oscript.data.OInexactNumber(java.lang.Math.round(n*100000)/100000.0);
+			}
+			@Override
+			protected Value getTypeImpl() {
+				return null;
+			}			
+		});
+
+
 			/*
 		IMG
 		OIMG

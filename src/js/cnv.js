@@ -58,6 +58,31 @@ function JAVA2JS(val) {
 			if (!obj) console.error("cnv.JAVA2JS : missing object "+val.odkey+":"+val._objId);
 			return obj;
 		}
+		if (val instanceof oscript.varray.Map) {
+			var isArray=val instanceof oscript.varray.Vector;
+			var l = val.length$();
+			if (l == 0) {				
+				if (isArray) return [];
+				return {};
+			}
+			if (!isArray) {
+				var r={};
+				var ki = val.keyIterator$();
+				while (ki.hasNext$()) {
+					var k = ki.next$().unhand$();
+					r[k.castToString$()]=JAVA2JS(val.elementAt$oscript_data_Value(k).unhand$());
+				}
+				return r;
+			} else {
+				var r=[];
+				var ki = val.keyIterator$();
+				while (ki.hasNext$()) {
+					var k = ki.next$().unhand$();
+					r.push(JAVA2JS(val.elementAt$oscript_data_Value(k).unhand$()));
+				}
+				return r;				
+			}			
+		}
 	}
 	if (Clazz.instanceOf(val, Clazz.array(java.lang.Object, -1))) {
 		// ARRAY
